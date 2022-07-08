@@ -51,6 +51,11 @@ DoctorId INT NOT NULL REFERENCES Doctors(Id),
 CHECK(EndDate > StartDate)
 )
 
+ALTER TABLE Examinations
+ADD DepartmentID INT REFERENCES Departments(Id)
+ALTER TABLE Examinations
+ADD DoctorID INT REFERENCES Doctors(Id)
+
 ALTER TABLE Wards
 ADD DepartmentID INT REFERENCES Departments(Id)
 
@@ -102,5 +107,14 @@ WHERE Departments.Id = Donations.DepartmentId and Sponsors.Name = 'Umbrella Corp
 --5. Вывести все пожертвования за последний месяц в виде: отделение, спонсор, сумма пожертвования, дата пожертвования.
 SELECT Departments.Name AS Отделение, Sponsors.Name AS Спонсор, Donations.Amount AS 'Сумма пожертвования', Donations.Date AS 'Дата пожертвования'
 FROM Departments, Sponsors, Donations
-WHERE Departments.ID = Donations.DepartmentId AND Donations.SponsorId = Sponsors.Id AND Donations.Date < ''
+WHERE Departments.ID = Donations.DepartmentId AND Donations.SponsorId = Sponsors.Id AND Donations.Date > '2022-07-07'
 
+--6. Вывести фамилии врачей с указанием отделений, в которых они проводят обследования. Необходимо учитывать обследования, проводимые только в будние дни.
+SELECT Doctors.Name, Departments.Name, Examinations.Name
+FROM Doctors, Departments, Examinations
+WHERE Departments.Id = Examinations.DepartmentID AND Doctors.Id = Examinations.DoctorID
+
+--7. Вывести названия палат и корпуса отделений, в которых проводит обследования врач “Василий Павлович”
+SELECT Wards.Name, Departments.Name, Doctors.Name
+FROM Doctors, Departments, Wards, Examinations
+WHERE Wards.DepartmentID = Departments.Id and Doctors.Id = Examinations.DoctorID AND Doctors.Name = 'Василий Павлович' AND Departments.Id = Examinations.DepartmentID
