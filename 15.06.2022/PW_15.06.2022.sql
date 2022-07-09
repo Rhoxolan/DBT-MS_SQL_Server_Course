@@ -59,10 +59,22 @@ ADD DoctorID INT REFERENCES Doctors(Id)
 ALTER TABLE Wards
 ADD DepartmentID INT REFERENCES Departments(Id)
 
+ALTER TABLE Departments
+ADD DoctorID INT REFERENCES Doctors(Id)
+
+ALTER TABLE Diseases
+ADD WardID INT REFERENCES Wards(Id)
+
 INSERT Specializations VALUES
 ('Травматолог'),
 ('Терапевт'),
 ('Хирург')
+
+ALTER TABLE Specializations
+ADD DiseasID INT REFERENCES Diseases(Id)
+
+ALTER TABLE Examinations
+ADD DiseasID INT REFERENCES Diseases(Id)
 
 INSERT DoctorsSpecializations VALUES
 (
@@ -118,3 +130,29 @@ WHERE Departments.Id = Examinations.DepartmentID AND Doctors.Id = Examinations.D
 SELECT Wards.Name, Departments.Name, Doctors.Name
 FROM Doctors, Departments, Wards, Examinations
 WHERE Wards.DepartmentID = Departments.Id and Doctors.Id = Examinations.DoctorID AND Doctors.Name = 'Василий Павлович' AND Departments.Id = Examinations.DepartmentID
+
+--8. Вывести названия отделений, которые получали пожертвование в размере больше 1001, с указанием их врачей
+SELECT Departments.Name, Doctors.Name, Donations.Amount
+FROM Departments, Donations, Doctors
+WHERE Departments.DoctorID = Doctors.Id and Donations.DepartmentId = Departments.Id AND Donations.Amount > 1001
+
+--9. Вывести названия отделений, в которых есть врачи, получающие больше 20000.
+SELECT Departments.Name AS 'Название департамента', Doctors.Name AS Имя, Doctors.Salary AS Salary
+FROM Departments, Doctors
+WHERE Departments.DoctorID = Doctors.Id and Doctors.Salary > 20000
+
+--10. Вывести названия специализаций, которые используются для лечения заболеваний со степенью тяжести выше 2.
+SELECT Specializations.Name, Diseases.Name
+FROM Specializations, Diseases
+WHERE Specializations.Id = Diseases.Id AND Diseases.Severity > 2
+
+--11. Вывести названия отделений и заболеваний, обследования по которым они проводили за последние полгода.
+SELECT Departments.Name, Diseases.Name, Examinations.StartTime, Examinations.EndTime
+FROM Departments, Diseases, Examinations
+WHERE Examinations.DoctorID = Departments.DoctorID AND Examinations.DepartmentID = Departments.Id AND Diseases.Id = Examinations.DiseasID
+
+--12. Вывести названия отделений и палат, в которых проводились обследования заболеваний со степенью тяжести 1
+SELECT Departments.Name, Wards.Name, Examinations.Name
+FROM Departments, Wards, Examinations, Diseases
+WHERE Examinations.DepartmentID = Departments.Id AND Wards.DepartmentID = Departments.Id AND Examinations.DepartmentID = Departments.Id AND
+Diseases.WardID = Wards.Id AND Diseases.Severity = 1
