@@ -105,3 +105,24 @@ SELECT Teachers.Name, Teachers.Surname, Groups.Name
 FROM Teachers, Groups
 
 --2. Вывести названия факультетов, фонд финансирования кафедр которых превышает фонд финансирования факультета
+SELECT Faculties.Name AS Факультет, Faculties.Financing AS 'Финансирование факультета',
+Departments.Name AS Департамент, Departments.Financing AS 'Финансирование департамента'
+FROM Faculties, Departments
+WHERE Departments.FacultyId = Faculties.Id AND Faculties.Financing > Departments.Financing
+
+--3. Вывести фамилии кураторов групп и названия групп, которые они курируют.
+SELECT Curators.Surname, Groups.Name
+FROM Groups, GroupsCurators, Curators
+WHERE GroupsCurators.CuratorId = Curators.Id AND GroupsCurators.GroupId = Groups.Id
+
+--4. Вывести имена и фамилии преподавателей, которые читают лекции у группы “Группа 15”.
+SELECT Teachers.Name AS 'Имя преподавателя', Teachers.Surname AS 'Фамилия преподавателя', Groups.Name AS 'Группа'
+FROM Teachers, Groups, GroupsLectures, Lectures
+WHERE GroupsLectures.GroupId = Groups.Id AND GroupsLectures.LectureId = Lectures.Id AND Lectures.Teacher = Teachers.Id AND
+Groups.Name = 'Группа 15'
+
+--5. Вывести фамилии преподавателей и названия факультетов на которых они читают лекции.
+SELECT Teachers.Name AS 'Имя преподавателя', Teachers.Surname AS 'Фамилия преподавателя', Faculties.Name AS 'Факультет'
+FROM Teachers, Lectures, GroupsLectures, Groups, Departments, Faculties
+WHERE Teachers.Id = Lectures.Teacher AND GroupsLectures.LectureId = Lectures.Id AND GroupsLectures.GroupId = Groups.Id AND
+Groups.DepartmentID = Departments.Id AND Departments.FacultyId = Faculties.Id
