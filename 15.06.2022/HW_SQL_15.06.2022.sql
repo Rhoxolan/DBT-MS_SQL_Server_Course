@@ -126,3 +126,36 @@ SELECT Teachers.Name AS 'Имя преподавателя', Teachers.Surname AS
 FROM Teachers, Lectures, GroupsLectures, Groups, Departments, Faculties
 WHERE Teachers.Id = Lectures.Teacher AND GroupsLectures.LectureId = Lectures.Id AND GroupsLectures.GroupId = Groups.Id AND
 Groups.DepartmentID = Departments.Id AND Departments.FacultyId = Faculties.Id
+
+--6. Вывести названия кафедр и названия групп, которые к ним относятся.
+SELECT Departments.Name AS 'Департамент', Groups.Name AS 'Группа'
+FROM Departments, Groups
+WHERE Groups.DepartmentID = Departments.Id
+
+--7. Вывести названия дисциплин, которые читает преподаватель “Василий Васильев”
+SELECT Subjects.Name AS Дисциплина, Teachers.Name AS 'Имя преподавателя', Teachers.Surname AS 'Фамилия преподавателя'
+FROM Teachers, Lectures, Subjects
+WHERE Lectures.Teacher = Teachers.Id AND Lectures.SubjectId = Subjects.Id AND Teachers.Name = 'Василий' AND Teachers.Surname = 'Васильев'
+
+--8. Вывести названия кафедр, на которых читается дисциплина “Основы автоматизации”.
+SELECT Departments.Name AS Департамент, Subjects.Name AS Дисциплина
+FROM Departments, Groups, GroupsLectures, Lectures, Subjects
+WHERE Departments.Id = Groups.DepartmentID AND GroupsLectures.GroupId = Groups.Id AND
+GroupsLectures.LectureId = Lectures.Id AND Lectures.SubjectId = Subjects.Id AND Subjects.Name = 'Основы автоматизации'
+
+--9. Вывести названия групп, которые относятся к факультету “Факультет АСУ ТП”.
+SELECT Groups.Name AS Группа, Faculties.Name AS Факультет
+FROM Groups, Departments, Faculties
+WHERE Groups.DepartmentID = Departments.Id AND Departments.FacultyId = Faculties.Id AND Faculties.Name = 'Факультет АСУ ТП'
+
+--10. Вывести названия групп 5-го курса, а также название факультетов, к которым они относятся.
+SELECT Groups.Name AS Група, Groups.Year AS Год, Faculties.Name AS Факультет
+FROM Groups, Departments, Faculties
+WHERE Groups.DepartmentID = Departments.Id AND Departments.FacultyId = Faculties.Id AND Groups.Year = 5
+
+--11. Вывести полные имена преподавателей и лекции, которые они читают (названия дисциплин и групп),
+-- причем отобрать только те лекции, которые читаются в аудитории “1l”.
+SELECT Teachers.Name AS 'Имя преподавателя', Teachers.Surname AS 'Фамилия преподавателя', Subjects.Name AS 'Лекция по предмету',
+Lectures.LectureRoom AS Аудитория
+FROM Teachers, Lectures, Subjects
+WHERE Lectures.Teacher = Teachers.Id AND Lectures.SubjectId = Subjects.Id AND Lectures.LectureRoom = '1l'
