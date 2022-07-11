@@ -62,3 +62,17 @@ SELECT Departments.Name AS Отделение, SUM(Doctors.Premium) AS 'Сумм
 FROM Departments, Wards, DoctorsExaminations, Doctors
 WHERE Wards.DepartmentID = Departments.Id AND DoctorsExaminations.DoctorId = Doctors.Id AND DoctorsExaminations.WardId = Wards.Id
 GROUP BY Departments.Name
+
+--5. Вывести названия отделений, в которых проводят обследования 5 и более врачей.
+SELECT Departments.Name AS Отделение, COUNT(DoctorsExaminations.DoctorId) AS 'Принимающие врачи'
+FROM Departments, Wards, DoctorsExaminations, Doctors
+WHERE DoctorsExaminations.DoctorId = Doctors.Id AND DoctorsExaminations.WardId = Wards.Id AND Wards.DepartmentID = Departments.Id
+GROUP BY Departments.Name
+HAVING COUNT(DoctorsExaminations.DoctorId) > 5
+
+--6. Вывести количество врачей и их суммарную зарплату (сумма ставки и надбавки).
+SELECT COUNT(DoctorsExaminations.DoctorId) AS 'Количество врачей', SUM(Doctors.Salary) + SUM(Doctors.Premium) AS 'Зарплата'
+FROM Doctors, DoctorsExaminations
+WHERE DoctorsExaminations.DoctorId = Doctors.Id
+GROUP BY Doctors.Id
+--Ты тут. Разобраться, почему не работает как надо.
