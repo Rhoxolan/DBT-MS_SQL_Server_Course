@@ -71,8 +71,27 @@ GROUP BY Departments.Name
 HAVING COUNT(DoctorsExaminations.DoctorId) > 5
 
 --6. Вывести количество врачей и их суммарную зарплату (сумма ставки и надбавки).
+--Версия 1 - через таблицу врачей
+SELECT COUNT(Doctors.Id) AS 'Количество врачей', SUM(Doctors.Salary) + SUM(Doctors.Premium) AS 'Зарплата'
+FROM Doctors
+--Версия 2 - через таблицу врачей, проводящих обследования
 SELECT COUNT(DoctorsExaminations.DoctorId) AS 'Количество врачей', SUM(Doctors.Salary) + SUM(Doctors.Premium) AS 'Зарплата'
 FROM Doctors, DoctorsExaminations
 WHERE DoctorsExaminations.DoctorId = Doctors.Id
-GROUP BY Doctors.Id
---Ты тут. Разобраться, почему не работает как надо.
+
+--7. Вывести среднюю зарплату (сумма ставки и надбавки) врачей.
+SELECT AVG(Doctors.Salary + Doctors.Premium) AS 'Среднее значение зарплаты врачей'
+FROM Doctors
+
+--8. Вывести названия палат с минимальной вместительностью.
+SELECT Name AS 'Палата с минимальной вместительностью', Places AS 'Мест'
+FROM Wards
+WHERE Places=(SELECT MIN(Places) FROM Wards)
+
+--9. Вывести в каких из корпусов 1, 2, и 5, суммарное количество мест в палатах превышает 30.
+--При этом учитывать только палаты с количеством мест больше 10.
+SELECT Departments.Building AS 'Корпус', SUM(Wards.Places) AS 'Количество мест в палатах'
+FROM Departments, Wards
+WHERE Departments.Id = Wards.DepartmentID AND Wards.Places > 10
+GROUP BY Departments.Building
+HAVING SUM(Wards.Places) > 30
