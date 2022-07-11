@@ -2,6 +2,13 @@
 
 USE Academy
 
+--Дополняем БД
+ALTER TABLE Groups
+ADD Students INT NOT NULL DEFAULT 0
+
+ALTER TABLE GroupsLectures
+ADD DayOfTheWeek INT NOT NULL CHECK (DayOfTheWeek > 0 AND DayOfTheWeek < 8) DEFAULT 1
+
 --1. Вывести количество преподавателей кафедры “Департамент информационных технологий”.
 SELECT COUNT(Lectures.Teacher) AS 'К-во преподавателей'
 FROM Departments, Groups, GroupsLectures, Lectures
@@ -25,6 +32,12 @@ FROM Lectures
 GROUP BY Lectures.LectureRoom
 
 --5. Вывести количество студентов, посещающих лекции преподавателя “Иван Иванов”.
+SELECT Teachers.Name AS Имя, Teachers.Surname AS Фамилия, SUM(Groups.Students) AS 'К-во студентов'
+FROM Groups, GroupsLectures, Lectures, Teachers
+WHERE Lectures.Teacher = Teachers.Id AND Teachers.Name = 'Иван' AND Teachers.Surname = 'Иванов' AND
+GroupsLectures.LectureId = Lectures.Id AND GroupsLectures.GroupId = Groups.Id
+GROUP BY Teachers.Name, Teachers.Surname
+
 SELECT Teachers.Name AS Имя, Teachers.Surname AS Фамилия, COUNT(Groups.Id) AS 'К-во групп'
 FROM Groups, GroupsLectures, Lectures, Teachers
 WHERE Lectures.Teacher = Teachers.Id AND Teachers.Name = 'Иван' AND Teachers.Surname = 'Иванов' AND
@@ -36,3 +49,28 @@ SELECT AVG(Teachers.Salary) AS 'Средняя ставка преподават
 FROM Teachers, Lectures, GroupsLectures, Groups, Departments, Faculties
 WHERE Faculties.Name = 'Факультет АСУ ТП' AND Teachers.Id = Lectures.Teacher AND GroupsLectures.GroupId = Groups.Id AND
 GroupsLectures.LectureId = Lectures.Id AND Groups.DepartmentID = Departments.Id AND Departments.FacultyId = Faculties.Id
+
+--7. Вывести минимальное и максимальное количество студентов среди всех групп.
+SELECT MIN(Students) AS 'Мин', MAX(Students) AS 'Макс'
+FROM Groups
+
+--8. Вывести средний фонд финансирования кафедр
+SELECT AVG(Financing)
+FROM Departments
+
+--9. Вывести полные имена преподавателей и количество читаемых ими дисциплин.
+SELECT Teachers.Name, Teachers.Surname, COUNT(Lectures.SubjectId) AS 'Количество читаемых дисциплин'
+FROM Teachers, Lectures
+WHERE Lectures.Teacher = Teachers.Id
+GROUP BY Teachers.Name, Teachers.Surname
+
+--10. Вывести количество лекций в каждый день недели.
+SELECT DayOfTheWeek AS 'День', COUNT(Id)
+FROM GroupsLectures
+GROUP BY DayOfTheWeek
+
+--11. Вывести номера аудиторий и количество кафедр, чьи лекции в них читаются.
+SELECT Lectures.LectureRoom as 'Аудитория', COUNT(Groups.DepartmentID) AS 'Количество кафедр'
+FROM Groups, GroupsLectures, Lectures
+WHERE GroupsLectures.GroupId = Groups.Id AND GroupsLectures.LectureId = Lectures.Id
+GROUP BY Lectures.LectureRoom
