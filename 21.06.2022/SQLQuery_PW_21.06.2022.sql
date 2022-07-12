@@ -29,3 +29,6 @@ WHERE Wards.Places > (SELECT AVG(Wards.Places) FROM Wards, Departments
 					WHERE Departments.Id = Wards.DepartmentID AND Departments.Name = 'Приёмный покой')
 
 --6. Вывести полные имена врачей, зарплаты которых (сумма ставки и надбавки) превышают более чем на 100 зарплату врача “Анатолий Анатольевич”.
+SELECT Doctors.Name AS 'ФИО Врача', Doctors.Salary + Doctors.Premium AS 'Зарплата'
+FROM Doctors
+WHERE Doctors.Salary + Doctors.Premium > (SELECT Doctors.Salary + Doctors.Premium FROM Doctors WHERE Doctors.Name = 'Анатолий Анатольевич') + 100
