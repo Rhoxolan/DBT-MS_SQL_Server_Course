@@ -1,25 +1,31 @@
---БД "Hospital" https://github.com/Rhoxolan/DBT-MS_SQL_Server_Course/blob/main/20.06.2022/PW_20.06.2022.sql
+--Р‘Р” "Hospital" https://github.com/Rhoxolan/DBT-MS_SQL_Server_Course/blob/main/20.06.2022/PW_20.06.2022.sql
 
 USE Hospital
 
---1. Вывести названия отделений, что находятся в том же корпусе, что и отделение “Приёмный покой”.
+--1. Р’С‹РІРµСЃС‚Рё РЅР°Р·РІР°РЅРёСЏ РѕС‚РґРµР»РµРЅРёР№, С‡С‚Рѕ РЅР°С…РѕРґСЏС‚СЃСЏ РІ С‚РѕРј Р¶Рµ РєРѕСЂРїСѓСЃРµ, С‡С‚Рѕ Рё РѕС‚РґРµР»РµРЅРёРµ вЂњРџСЂРёС‘РјРЅС‹Р№ РїРѕРєРѕР№вЂќ.
 SELECT Name
 FROM Departments
-WHERE Building = (SELECT Building FROM Departments WHERE Name = 'Приёмный покой')
+WHERE Building = (SELECT Building FROM Departments WHERE Name = 'РџСЂРёС‘РјРЅС‹Р№ РїРѕРєРѕР№')
 
---2. Вывести названия отделений, что находятся в том же корпусе, что и отделения “Приёмный покой” и “Аллергология”.
+--2. Р’С‹РІРµСЃС‚Рё РЅР°Р·РІР°РЅРёСЏ РѕС‚РґРµР»РµРЅРёР№, С‡С‚Рѕ РЅР°С…РѕРґСЏС‚СЃСЏ РІ С‚РѕРј Р¶Рµ РєРѕСЂРїСѓСЃРµ, С‡С‚Рѕ Рё РѕС‚РґРµР»РµРЅРёСЏ вЂњРџСЂРёС‘РјРЅС‹Р№ РїРѕРєРѕР№вЂќ Рё вЂњРђР»Р»РµСЂРіРѕР»РѕРіРёСЏвЂќ.
 SELECT Name
 FROM Departments
-WHERE Building = ANY(SELECT Building FROM Departments WHERE Name = 'Приёмный покой' OR Name = 'Аллергология')
+WHERE Building = ANY(SELECT Building FROM Departments WHERE Name = 'РџСЂРёС‘РјРЅС‹Р№ РїРѕРєРѕР№' OR Name = 'РђР»Р»РµСЂРіРѕР»РѕРіРёСЏ')
 
---3. Вывести название отделения, которое получило меньше всего пожертвований.
+--3. Р’С‹РІРµСЃС‚Рё РЅР°Р·РІР°РЅРёРµ РѕС‚РґРµР»РµРЅРёСЏ, РєРѕС‚РѕСЂРѕРµ РїРѕР»СѓС‡РёР»Рѕ РјРµРЅСЊС€Рµ РІСЃРµРіРѕ РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№.
 SELECT Departments.Name, Donations.Amount
 FROM Departments, Donations
 WHERE Donations.DepartmentId = Departments.Id AND Donations.Amount = (SELECT MIN(Donations.Amount) FROM Donations)
 
---4. Вывести фамилии врачей, ставка которых больше, чем у врача “Анатолий Анатольевич”.
+--4. Р’С‹РІРµСЃС‚Рё С„Р°РјРёР»РёРё РІСЂР°С‡РµР№, СЃС‚Р°РІРєР° РєРѕС‚РѕСЂС‹С… Р±РѕР»СЊС€Рµ, С‡РµРј Сѓ РІСЂР°С‡Р° вЂњРђРЅР°С‚РѕР»РёР№ РђРЅР°С‚РѕР»СЊРµРІРёС‡вЂќ.
 SELECT Doctors.Name
 FROM Doctors
-WHERE Doctors.Salary > (SELECT Doctors.Salary FROM Doctors WHERE Doctors.Name = 'Анатолий Анатольевич')
+WHERE Doctors.Salary > (SELECT Doctors.Salary FROM Doctors WHERE Doctors.Name = 'РђРЅР°С‚РѕР»РёР№ РђРЅР°С‚РѕР»СЊРµРІРёС‡')
 
---5. Вывести названия палат, вместимость которых больше, чем средняя вместимость в палатах отделения “Приёмный покой”.
+--5. Р’С‹РІРµСЃС‚Рё РЅР°Р·РІР°РЅРёСЏ РїР°Р»Р°С‚, РІРјРµСЃС‚РёРјРѕСЃС‚СЊ РєРѕС‚РѕСЂС‹С… Р±РѕР»СЊС€Рµ, С‡РµРј СЃСЂРµРґРЅСЏСЏ РІРјРµСЃС‚РёРјРѕСЃС‚СЊ РІ РїР°Р»Р°С‚Р°С… РѕС‚РґРµР»РµРЅРёСЏ вЂњРџСЂРёС‘РјРЅС‹Р№ РїРѕРєРѕР№вЂќ.
+SELECT Wards.Name, Wards.Places
+FROM Wards
+WHERE Wards.Places > (SELECT AVG(Wards.Places) FROM Wards, Departments
+					WHERE Departments.Id = Wards.DepartmentID AND Departments.Name = 'РџСЂРёС‘РјРЅС‹Р№ РїРѕРєРѕР№')
+
+--6. Р’С‹РІРµСЃС‚Рё РїРѕР»РЅС‹Рµ РёРјРµРЅР° РІСЂР°С‡РµР№, Р·Р°СЂРїР»Р°С‚С‹ РєРѕС‚РѕСЂС‹С… (СЃСѓРјРјР° СЃС‚Р°РІРєРё Рё РЅР°РґР±Р°РІРєРё) РїСЂРµРІС‹С€Р°СЋС‚ Р±РѕР»РµРµ С‡РµРј РЅР° 100 Р·Р°СЂРїР»Р°С‚Сѓ РІСЂР°С‡Р° вЂњРђРЅР°С‚РѕР»РёР№ РђРЅР°С‚РѕР»СЊРµРІРёС‡вЂќ.
