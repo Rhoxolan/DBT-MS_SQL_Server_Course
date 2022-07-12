@@ -25,8 +25,9 @@ WHERE Doctors.Salary > (SELECT Doctors.Salary FROM Doctors WHERE Doctors.Name = 
 --5. Вывести названия палат, вместимость которых больше, чем средняя вместимость в палатах отделения “Приёмный покой”.
 SELECT Wards.Name, Wards.Places
 FROM Wards
-WHERE Wards.Places > (SELECT AVG(Wards.Places) FROM Wards, Departments
-					WHERE Departments.Id = Wards.DepartmentID AND Departments.Name = 'Приёмный покой')
+WHERE Wards.Places >
+(SELECT AVG(Wards.Places) FROM Wards, Departments
+WHERE Departments.Id = Wards.DepartmentID AND Departments.Name = 'Приёмный покой')
 
 --6. Вывести полные имена врачей, зарплаты которых (сумма ставки и надбавки) превышают более чем на 100 зарплату врача “Анатолий Анатольевич”.
 SELECT Doctors.Name AS 'ФИО Врача', Doctors.Salary + Doctors.Premium AS 'Зарплата'
@@ -36,22 +37,25 @@ WHERE Doctors.Salary + Doctors.Premium > (SELECT Doctors.Salary + Doctors.Premiu
 --7. Вывести названия отделений, в которых проводит обследования врач “Анатолий Анатольевич”.
 SELECT Departments.Name AS Отделение
 FROM Departments
-WHERE Departments.Name = (SELECT Departments.Name
-		FROM Departments, Wards, DoctorsExaminations, Doctors
-		WHERE DoctorsExaminations.DoctorId = Doctors.Id AND DoctorsExaminations.WardId = Wards.Id AND
-		Wards.DepartmentID = Departments.Id AND Doctors.Name = 'Анатолий Анатольевич')
+WHERE Departments.Name =
+(SELECT Departments.Name
+FROM Departments, Wards, DoctorsExaminations, Doctors
+WHERE DoctorsExaminations.DoctorId = Doctors.Id AND DoctorsExaminations.WardId = Wards.Id AND
+Wards.DepartmentID = Departments.Id AND Doctors.Name = 'Анатолий Анатольевич')
 
 --8. Вывести названия спонсоров, которые не делали пожертвования отделениям “Травмотология” и “Хирургическое”.
 SELECT Sponsors.Name AS Спонсор
 FROM Sponsors, Donations
-WHERE Donations.SponsorId = Sponsors.Id AND Donations.DepartmentId != ALL (SELECT Departments.Id
-																	FROM Departments
-																	WHERE Departments.Name = 'Травматология' OR 
-																	Departments.Name = 'Хирургическое')
+WHERE Donations.SponsorId = Sponsors.Id AND Donations.DepartmentId != ALL
+(SELECT Departments.Id
+FROM Departments
+WHERE Departments.Name = 'Травматология' OR 
+Departments.Name = 'Хирургическое')
 
 --9. Вывести фамилии врачей, которые проводят обследования в период с 12:00 до 15:00.
 SELECT Doctors.Name
 FROM Doctors
-WHERE Doctors.Id = (SELECT DoctorsExaminations.Id
-					FROM DoctorsExaminations
-					WHERE DoctorsExaminations.StartTime BETWEEN '12:00:00' AND '15:00:00')
+WHERE Doctors.Id =
+(SELECT DoctorsExaminations.Id
+FROM DoctorsExaminations
+WHERE DoctorsExaminations.StartTime BETWEEN '12:00:00' AND '15:00:00')
