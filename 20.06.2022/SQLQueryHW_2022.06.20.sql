@@ -74,3 +74,16 @@ SELECT Lectures.LectureRoom as 'Аудитория', COUNT(Groups.DepartmentID) 
 FROM Groups, GroupsLectures, Lectures
 WHERE GroupsLectures.GroupId = Groups.Id AND GroupsLectures.LectureId = Lectures.Id
 GROUP BY Lectures.LectureRoom
+
+--12. Вывести названия факультетов и количество дисциплин, которые на них читаются.
+SELECT Faculties.Name AS Факультет, COUNT(Lectures.SubjectId) AS 'К-во дисциплин'
+FROM Faculties, Departments, Groups, GroupsLectures, Lectures
+WHERE Departments.FacultyId = Faculties.Id AND Groups.DepartmentID = Departments.Id AND GroupsLectures.GroupId = Groups.Id AND
+GroupsLectures.LectureId = Lectures.Id
+GROUP BY Faculties.Name
+
+--13. Вывести количество лекций для каждой пары преподаватель-аудитория.
+SELECT Teachers.Name AS Имя, Teachers.Surname AS Фамилия, Lectures.LectureRoom AS 'Аудитория', COUNT(Lectures.Id) AS 'К-во лекций' 
+FROM Lectures, Teachers
+WHERE Lectures.Teacher = Teachers.Id
+GROUP BY Teachers.Name, Teachers.Surname, Lectures.LectureRoom
