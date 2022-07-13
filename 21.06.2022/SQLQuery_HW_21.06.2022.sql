@@ -69,3 +69,29 @@ FROM Teachers
 WHERE Teachers.Salary > (SELECT AVG(Teachers.Salary) FROM Teachers WHERE Teachers.IsProfessor = 1)
 
 --5. Вывести названия групп, у которых больше одного куратора.
+SELECT G.Name, COUNT(GC.GroupId)
+FROM Groups G JOIN GroupsCurators GC
+ON G.Id = GC.GroupId
+GROUP BY G.Name
+HAVING COUNT(GC.GroupId) >1
+
+SELECT *
+FROM Groups G JOIN GroupsCurators GC
+ON G.Id = GC.GroupId
+
+--6. Вывести названия групп, имеющих рейтинг (средний рейтинг всех студентов группы) меньше, чем минимальный рейтинг групп 5-го курса.
+SELECT Groups.Name, Groups.AvgRating
+FROM Groups
+WHERE Groups.AvgRating <
+	(SELECT MIN(Students.Rating)
+	FROM Students, GroupsStudents, Groups
+	WHERE GroupsStudents.GroupId = Groups.Id AND GroupsStudents.StudentId = Students.Id AND Groups.Year = 5)
+
+--7. Вывести названия факультетов, суммарный фонд финансирования кафедр которых больше суммарного фонда финансирования
+--кафедр факультета “Факультет АСУ ТП”.
+
+--8. Вывести названия дисциплин и полные имена преподавателей, читающих наибольшее количество лекций по ним.
+
+--9. Вывести название дисциплины, по которому читается меньше всего лекций.
+
+--10. Вывести количество студентов и читаемых дисциплин на кафедре “Департамент информационных технологий”
