@@ -41,9 +41,26 @@ INSERT GroupsStudents VALUES
 ALTER TABLE Departments
 ADD Building  INT CHECK(Building > -1) NOT NULL DEFAULT 0
 
---1. Вывести номера корпусов, если суммарный фонд финансирования расположенных в них кафедр превышает 1000.
-SELECT Departments.Building
-FROM Departments
-WHERE Departments.Financing > 1000
+ALTER TABLE Lectures
+ADD DateOfLecture DATE NOT NULL DEFAULT '2022-09-01'
 
---2. Вывести названия групп 5-го курса кафедры “Департамент информационных технологий”, которые имеют более 10 пар в первую неделю.
+ALTER TABLE Groups
+ADD AvgRating INT DEFAULT 0 NOT NULL
+
+--1. Вывести номера корпусов, если суммарный фонд финансирования расположенных в них кафедр превышает выше средней по кафедрам.
+SELECT Departments.Building, Departments.Financing
+FROM Departments
+WHERE Departments.Financing > (SELECT AVG(Departments.Financing) FROM Departments)
+
+--2. Вывести названия групп 5-го курса кафедры “Департамент информационных технологий”, которые имеют пары в первую неделю.
+SELECT DISTINCT Groups.Name
+FROM Groups, Departments, GroupsLectures
+WHERE Groups.DepartmentID = Departments.Id AND Departments.Name = 'Департамент информационных технологий' AND
+GroupsLectures.GroupId = Groups.Id AND GroupsLectures.LectureId = ANY(SELECT Lectures.Id FROM Lectures WHERE Lectures.DateOfLecture < '2022-09-07')
+
+--3. Вывести названия групп, имеющих рейтинг (средний рейтинг всех студентов группы) больше, чем рейтинг группы “Группа 15”
+SELECT Groups.Name, Groups.AvgRating
+FROM Groups
+WHERE Groups.AvgRating > (SELECT Groups.AvgRating FROM Groups WHERE Groups.Name = 'Группа 15')
+
+--4. Вывести фамилии и имена преподавателей, ставка которых выше средней ставки профессоров.
