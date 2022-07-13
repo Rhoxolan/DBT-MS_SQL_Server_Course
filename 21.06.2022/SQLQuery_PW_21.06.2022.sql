@@ -52,6 +52,19 @@ WHERE Donations.SponsorId = Sponsors.Id AND Donations.DepartmentId != ALL
 	WHERE Departments.Name = 'Травматология' OR 
 	Departments.Name = 'Хирургическое')
 
+SELECT DISTINCT S.Name FROM Donations Do 
+JOIN Departments D ON Do.DepartmentId = D.Id
+JoiN Sponsors S ON D.Id = Do.SponsorId
+WHERE D.Name = 'Травматология' OR D.Name = 'Хирургическое'
+
+SELECT * FROM  Sponsors
+WHERE ID Not in(
+
+SELECT DISTINCT S.Id FROM Donations Do 
+JOIN Departments D ON Do.DepartmentId = D.Id
+JoiN Sponsors S ON D.Id = Do.SponsorId
+WHERE D.Name = 'Травматология' OR D.Name = 'Хирургическое')
+
 --9. Вывести фамилии врачей, которые проводят обследования в период с 12:00 до 15:00.
 SELECT Doctors.Name
 FROM Doctors
