@@ -64,3 +64,8 @@ FROM Groups
 WHERE Groups.AvgRating > (SELECT Groups.AvgRating FROM Groups WHERE Groups.Name = 'Группа 15')
 
 --4. Вывести фамилии и имена преподавателей, ставка которых выше средней ставки профессоров.
+SELECT Teachers.Name AS 'Имя преподавателя', Teachers.Surname AS 'Фамилия преподавателя', Teachers.Salary as 'Ставка'
+FROM Teachers
+WHERE Teachers.Salary > (SELECT AVG(Teachers.Salary) FROM Teachers WHERE Teachers.IsProfessor = 1)
+
+--5. Вывести названия групп, у которых больше одного куратора.
