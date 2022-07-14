@@ -69,15 +69,11 @@ FROM Teachers
 WHERE Teachers.Salary > (SELECT AVG(Teachers.Salary) FROM Teachers WHERE Teachers.IsProfessor = 1)
 
 --5. Вывести названия групп, у которых больше одного куратора.
-SELECT G.Name, COUNT(GC.GroupId)
-FROM Groups G JOIN GroupsCurators GC
-ON G.Id = GC.GroupId
-GROUP BY G.Name
-HAVING COUNT(GC.GroupId) >1
-
-SELECT *
-FROM Groups G JOIN GroupsCurators GC
-ON G.Id = GC.GroupId
+SELECT Groups.Name, COUNT(GroupsCurators.GroupId)
+FROM Groups
+JOIN GroupsCurators ON GroupsCurators.GroupId = Groups.Id
+GROUP BY Groups.Name
+HAVING COUNT(GroupsCurators.GroupId) > 1
 
 --6. Вывести названия групп, имеющих рейтинг (средний рейтинг всех студентов группы) меньше, чем минимальный рейтинг групп 5-го курса.
 SELECT Groups.Name, Groups.AvgRating
@@ -89,8 +85,22 @@ WHERE Groups.AvgRating <
 
 --7. Вывести названия факультетов, суммарный фонд финансирования кафедр которых больше суммарного фонда финансирования
 --кафедр факультета “Факультет АСУ ТП”.
+SELECT Faculties.Name, SUM(Departments.Financing)
+FROM Faculties
+JOIN Departments ON Departments.FacultyId = Faculties.Id
+GROUP BY Faculties.Name
+HAVING SUM(Departments.Financing) >
+	(SELECT Departments.Financing
+	FROM Departments, Faculties
+	WHERE Departments.FacultyId = Faculties.Id AND Faculties.Name = 'Факультет АСУ ТП')
 
 --8. Вывести названия дисциплин и полные имена преподавателей, читающих наибольшее количество лекций по ним.
+SELECT Subjects.Name AS 'Предмет', Teachers.Name AS 'Имя преподавателя', Teachers.Surname AS 'Фамилия преподавателя', COUNT(Subjects.Id)
+FROM Subjects
+JOIN Lectures ON Lectures.SubjectId = Subjects.Id
+JOIN Teachers ON Lectures.Teacher = Teachers.Id
+GROUP BY Subjects.Name, Teachers.Name, Teachers.Surname
+ORDER BY COUNT(Subjects.Id) DESC
 
 --9. Вывести название дисциплины, по которому читается меньше всего лекций.
 
