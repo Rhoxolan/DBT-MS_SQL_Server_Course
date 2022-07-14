@@ -110,3 +110,11 @@ GROUP BY Subjects.Name
 ORDER BY COUNT(Subjects.Id) DESC
 
 --10. Вывести количество студентов и читаемых дисциплин на кафедре “Департамент информационных технологий”
+SELECT COUNT(GroupsStudents.StudentId) AS 'К-во студентов', COUNT(Lectures.SubjectId) AS 'К-во дисциплин', Departments.Name AS 'Департамент'
+FROM Departments
+JOIN Groups ON Groups.DepartmentID = Departments.Id
+JOIN GroupsStudents ON GroupsStudents.GroupId = Groups.Id
+JOIN GroupsLectures ON GroupsLectures.GroupId = Groups.Id
+JOIN Lectures ON GroupsLectures.LectureId = Lectures.Id
+WHERE Departments.Name = 'Департамент информационных технологий'
+GROUP BY Departments.Name
