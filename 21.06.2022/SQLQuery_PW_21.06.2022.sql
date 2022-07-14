@@ -44,26 +44,14 @@ WHERE Departments.Name =
 	Wards.DepartmentID = Departments.Id AND Doctors.Name = 'Анатолий Анатольевич')
 
 --8. Вывести названия спонсоров, которые не делали пожертвования отделениям “Травмотология” и “Хирургическое”.
-SELECT Sponsors.Name AS Спонсор
-FROM Sponsors, Donations
-WHERE Donations.SponsorId = Sponsors.Id AND Donations.DepartmentId != ALL
-	(SELECT Departments.Id
-	FROM Departments
-	WHERE Departments.Name = 'Травматология' OR 
-	Departments.Name = 'Хирургическое')
-
-SELECT DISTINCT S.Name FROM Donations Do 
-JOIN Departments D ON Do.DepartmentId = D.Id
-JoiN Sponsors S ON D.Id = Do.SponsorId
-WHERE D.Name = 'Травматология' OR D.Name = 'Хирургическое'
-
-SELECT * FROM  Sponsors
-WHERE ID Not in(
-
-SELECT DISTINCT S.Id FROM Donations Do 
-JOIN Departments D ON Do.DepartmentId = D.Id
-JoiN Sponsors S ON D.Id = Do.SponsorId
-WHERE D.Name = 'Травматология' OR D.Name = 'Хирургическое')
+SELECT Sponsors.Name
+FROM Sponsors
+WHERE Sponsors.Name != ALL
+	(SELECT Sponsors.Name
+	FROM Donations
+	JOIN Departments ON Donations.DepartmentId = Departments.Id
+	JOIN Sponsors ON Donations.SponsorId = Sponsors.Id
+	WHERE Departments.Name = 'Травматология' OR Departments.Name = 'Хирургическое')
 
 --9. Вывести фамилии врачей, которые проводят обследования в период с 12:00 до 15:00.
 SELECT Doctors.Name
