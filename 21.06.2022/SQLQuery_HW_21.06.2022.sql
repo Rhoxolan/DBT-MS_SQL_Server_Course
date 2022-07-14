@@ -103,5 +103,10 @@ GROUP BY Subjects.Name, Teachers.Name, Teachers.Surname
 ORDER BY COUNT(Subjects.Id) DESC
 
 --9. Вывести название дисциплины, по которому читается меньше всего лекций.
+SELECT Subjects.Name AS 'Предмет', COUNT(Subjects.Id) AS 'К-во лекций'
+FROM Subjects
+JOIN Lectures ON Lectures.SubjectId = Subjects.Id
+GROUP BY Subjects.Name
+ORDER BY COUNT(Subjects.Id) DESC
 
 --10. Вывести количество студентов и читаемых дисциплин на кафедре “Департамент информационных технологий”
