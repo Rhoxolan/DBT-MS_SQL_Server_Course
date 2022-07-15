@@ -35,12 +35,12 @@ ADD DateExam DATE NOT NULL DEFAULT '2022-01-01'
 --1. Вывести названия и вместимости палат, расположенных в 5-м корпусе, вместимостью 5 и более мест,
 -- если в этом корпусе есть хотя бы одна палата вместимостью более 15 мест.
 -- "EXISTS"
---Вариант 1
+-- Вариант 1
 SELECT Wards.Name, Wards.Places
 FROM Wards, Departments
 WHERE Wards.DepartmentID = Departments.Id AND EXISTS (SELECT * FROM Wards WHERE Wards.DepartmentID = Departments.Id AND Wards.Places > 15) AND
 Wards.Places > 5  AND Departments.Building = 5
---Вариант 2
+-- Вариант 2
 SELECT Wards.Name, Wards.Places
 FROM Wards
 WHERE EXISTS (SELECT * FROM Departments WHERE Wards.DepartmentID = Departments.Id AND Wards.Places > 15 AND Departments.Building = 5) AND
@@ -100,7 +100,7 @@ JOIN Wards ON Wards.Id = DoctorsExaminations.WardId
 JOIN Departments ON Wards.DepartmentID = Departments.Id AND Departments.Name = 'Травматология' OR Departments.Name = 'Хирургическое'
 
 --10. Вывести названия отделений, в которых работают интерны и профессоры
--- "INNER JOIN", "LEFT JOIN", "NOT EXISTS"
+-- "INNER JOIN", "LEFT JOIN", "EXISTS"
 SELECT Departments.Name
 FROM Departments
 WHERE EXISTS
@@ -110,3 +110,38 @@ WHERE EXISTS
 	JOIN DoctorsExaminations ON DoctorsExaminations.DoctorId = Doctors.Id
 	JOIN Wards ON Wards.Id = DoctorsExaminations.WardId
 	WHERE Wards.DepartmentID = Departments.Id)
+
+--11. Вывести полные имена врачей и отделения в которых они проводят обследования,
+-- если отделение имеет фонд финансирования более 1000.
+-- "INNER JOIN", "EXISTS"
+SELECT Doctors.Name
+FROM Doctors
+WHERE EXISTS
+	(SELECT * FROM Departments
+	JOIN Wards ON Wards.DepartmentID = Departments.Id
+	JOIN DoctorsExaminations ON Wards.Id = DoctorsExaminations.WardId AND DoctorsExaminations.DoctorId = Doctors.Id
+	WHERE Departments.Financing > 1000)
+
+--12. Вывести название отделения, в котором проводит обследования врач с наибольшей ставкой.
+-- "INNER JOIN"
+-- Вариант 1
+SELECT Departments.Name, Doctors.Salary
+FROM Departments
+JOIN Wards ON Wards.DepartmentID = Departments.Id
+JOIN DoctorsExaminations ON Wards.Id = DoctorsExaminations.WardId
+JOIN Doctors ON Doctors.Id = DoctorsExaminations.DoctorId
+ORDER BY Doctors.Salary DESC
+-- Вариант 2
+SELECT Departments.Name, Doctors.Salary
+FROM Departments
+JOIN Wards ON Wards.DepartmentID = Departments.Id
+JOIN DoctorsExaminations ON Wards.Id = DoctorsExaminations.WardId
+JOIN Doctors ON Doctors.Id = DoctorsExaminations.DoctorId
+WHERE Doctors.Salary = (SELECT MAX(Salary) FROM Doctors)
+
+--13. Вывести названия заболеваний и количество проводимых по ним обследований.
+-- "INNER JOIN"
+SELECT Diseases.Name, COUNT(DoctorsExaminations.DiseasID)
+FROM Diseases
+JOIN DoctorsExaminations ON DoctorsExaminations.DiseasID = Diseases.Id
+GROUP BY Diseases.Name
