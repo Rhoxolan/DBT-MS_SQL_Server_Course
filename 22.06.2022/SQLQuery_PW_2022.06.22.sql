@@ -86,3 +86,27 @@ JOIN Interns ON Interns.DoctorId = Doctors.Id
 WHERE Doctors.Salary > ANY (SELECT Doctors.Salary FROM Doctors WHERE NOT EXISTS (SELECT * FROM Interns WHERE Doctors.Id = Interns.DoctorId))
 
 --8. Вывести названия палат, чья вместимость больше, чем вместимость каждой палаты, находящейся в 3-м корпусе.
+-- "INNER JOIN"
+SELECT Wards.Name, Wards.Places
+FROM Wards
+WHERE Wards.Places > ALL (SELECT Wards.Places FROM Wards JOIN Departments ON Wards.DepartmentID = Departments.Id AND Departments.Building = 3)
+
+--9. Вывести фамилии врачей, проводящих обследования в отделениях “Травматология” и “Хирургическое”.
+-- "INNER JOIN"
+SELECT Doctors.Name, Departments.Name
+FROM Doctors
+JOIN DoctorsExaminations ON DoctorsExaminations.DoctorId = Doctors.Id
+JOIN Wards ON Wards.Id = DoctorsExaminations.WardId
+JOIN Departments ON Wards.DepartmentID = Departments.Id AND Departments.Name = 'Травматология' OR Departments.Name = 'Хирургическое'
+
+--10. Вывести названия отделений, в которых работают интерны и профессоры
+-- "INNER JOIN", "LEFT JOIN", "NOT EXISTS"
+SELECT Departments.Name
+FROM Departments
+WHERE EXISTS
+	(SELECT * FROM Professors
+	JOIN Doctors ON Professors.DoctorId = Doctors.Id
+	LEFT JOIN Interns ON Interns.DoctorId = Doctors.Id
+	JOIN DoctorsExaminations ON DoctorsExaminations.DoctorId = Doctors.Id
+	JOIN Wards ON Wards.Id = DoctorsExaminations.WardId
+	WHERE Wards.DepartmentID = Departments.Id)
