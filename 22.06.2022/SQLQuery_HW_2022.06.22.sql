@@ -117,39 +117,43 @@ WHERE NOT EXISTS
 	Schedules.Week = 2 AND
 	Schedules.Class = 3)
 
---6. Вывести полные имена преподавателей факультета “Департамент информационных технологий”, которые не курируют группы кафедры “Факультет АСУ ТП”.-- "NOT EXISTS"SELECT Teachers.Name, Teachers.SurnameFROM TeachersWHERE NOT EXISTS	(SELECT * FROM Heads	JOIN Departments ON Departments.HeadID = Heads.Id	JOIN Faculties ON Departments.FacultyId = Faculties.Id	WHERE Heads.TeacherId = Teachers.Id AND	Departments.Name = 'Департамент информационных технологий' AND	Faculties.Name = 'Факультет АСУ ТП')--7. Вывести список номеров всех корпусов, которые имеются в таблицах факультетов, кафедр и аудиторий.-- "UNION"-- Вариант 1SELECT BuildingFROM DepartmentsUNION SELECT Building FROM FacultiesUNION SELECT Building FROM LectureRooms-- Вариант 2SELECT BuildingFROM DepartmentsUNION ALL SELECT Building FROM FacultiesUNION ALL SELECT Building FROM LectureRooms--8. Вывести полные имена преподавателей в следующем порядке: деканы факультетов, заведующие кафедрами, преподаватели, кураторы, ассистенты.SELECT Teachers.Name, Teachers.SurnameFROM Teachers--Пробую самSELECT U.Name, U.Surname
-  FROM (
-    SELECT T.Name,T.Surname, 1 AS Kind
-      FROM DEAN LEFT JOIN Teachers T ON DEAN.TeacherId=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 2 AS Kind
-      FROM Heads LEFT JOIN Teachers T ON Heads.TeacherId=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 3 AS Kind
-      FROM Lectures LEFT JOIN Teachers T ON Lectures.Teacher=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 4 AS Kind
-      FROM Curators LEFT JOIN Teachers T ON Curators.TeacherId=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 5 AS Kind
-      FROM Assistants LEFT JOIN Teachers T ON Assistants.TeacherId=T.Id) U
-  ORDER BY U.Kind, U.Name, U.Surname--Пример с сайтаSELECT U.Name, U.Surname
-  FROM (
-    SELECT T.Name,T.Surname, 1 AS Kind
-      FROM DEAN LEFT JOIN Teachers T ON DEAN.TeacherId=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 2 AS Kind
-      FROM Heads LEFT JOIN Teachers T ON Heads.TeacherId=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 3 AS Kind
-      FROM Lectures LEFT JOIN Teachers T ON Lectures.Teacher=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 4 AS Kind
-      FROM Curators LEFT JOIN Teachers T ON Curators.TeacherId=T.Id
-    UNION
-    SELECT T.Name,T.Surname, 5 AS Kind
-      FROM Assistants LEFT JOIN Teachers T ON Assistants.TeacherId=T.Id) U
-  ORDER BY U.Kind, U.Name, U.Surname
+--6. Вывести полные имена преподавателей факультета “Департамент информационных технологий”, которые не курируют группы кафедры “Факультет АСУ ТП”.
+-- "NOT EXISTS"
+SELECT Teachers.Name, Teachers.Surname
+FROM Teachers
+WHERE NOT EXISTS
+	(SELECT * FROM Heads
+	JOIN Departments ON Departments.HeadID = Heads.Id
+	JOIN Faculties ON Departments.FacultyId = Faculties.Id
+	WHERE Heads.TeacherId = Teachers.Id AND
+	Departments.Name = 'Департамент информационных технологий' AND
+	Faculties.Name = 'Факультет АСУ ТП')
+
+--7. Вывести список номеров всех корпусов, которые имеются в таблицах факультетов, кафедр и аудиторий.
+-- "UNION"
+-- Вариант 1
+SELECT Building
+FROM Departments
+UNION SELECT Building FROM Faculties
+UNION SELECT Building FROM LectureRooms
+-- Вариант 2
+SELECT Building
+FROM Departments
+UNION ALL SELECT Building FROM Faculties
+UNION ALL SELECT Building FROM LectureRooms
+
+--8. Вывести полные имена преподавателей в следующем порядке: деканы факультетов, заведующие кафедрами, преподаватели, кураторы, ассистенты.
+-- "UNION", "LEFT JOIN"
+SELECT Teachers.Name, Teachers.Surname, 'Деканы' AS Kind
+FROM DEAN LEFT JOIN Teachers ON DEAN.TeacherId = Teachers.Id
+UNION ALL SELECT Teachers.Name, Teachers.Surname, 'Главы' AS Kind
+FROM Heads LEFT JOIN Teachers ON Heads.TeacherId = Teachers.Id
+UNION ALL SELECT Teachers.Name, Teachers.Surname, 'Учителя' AS Kind
+FROM Lectures LEFT JOIN Teachers ON Lectures.Teacher = Teachers.Id
+UNION ALL SELECT Teachers.Name, Teachers.Surname, 'Кураторы' AS Kind
+FROM Curators LEFT JOIN Teachers ON Curators.TeacherId = Teachers.Id
+UNION ALL SELECT Teachers.Name, Teachers.Surname, 'Ассистенты' AS Kind
+FROM Assistants LEFT JOIN Teachers ON Assistants.TeacherId = Teachers.Id
 
 --9. Вывести дни недели (без повторений), в которые имеются занятия в аудиториях “1l” и “2l” корпуса 5.
 SELECT DISTINCT Schedules.DayOfWeek
