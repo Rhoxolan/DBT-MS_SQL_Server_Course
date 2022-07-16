@@ -156,6 +156,7 @@ UNION ALL SELECT Teachers.Name, Teachers.Surname, 'Ассистенты' AS Kind
 FROM Assistants LEFT JOIN Teachers ON Assistants.TeacherId = Teachers.Id
 
 --9. Вывести дни недели (без повторений), в которые имеются занятия в аудиториях “1l” и “2l” корпуса 5.
+-- "LEFT JOIN"
 SELECT DISTINCT Schedules.DayOfWeek
 FROM Schedules
 JOIN LectureRooms ON LectureRooms.Building = 5 AND LectureRooms.Name = '1l' OR LectureRooms.Name = '2l'
