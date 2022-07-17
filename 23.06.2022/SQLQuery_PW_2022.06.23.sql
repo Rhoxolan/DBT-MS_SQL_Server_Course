@@ -1,0 +1,55 @@
+CREATE DATABASE SportShop
+
+USE SportShop
+
+CREATE TABLE Products
+(
+Id INT PRIMARY KEY IDENTITY NOT NULL,
+Name NVARCHAR(100) CHECK(Name != '') NOT NULL,
+CategoryId INT REFERENCES Categories(Id) ON DELETE CASCADE NOT NULL,
+ProductsAmount INT CHECK(ProductsAmount > -1) NOT NULL,
+CostPrice INT NOT NULL,
+Price INT NOT NULL,
+Manufacturer INT NOT NULL
+)
+
+CREATE TABLE Categories
+(
+Id INT PRIMARY KEY IDENTITY NOT NULL,
+Name NVARCHAR(100) CHECK(Name != '') NOT NULL
+)
+
+CREATE TABLE Sellings
+(
+Id INT PRIMARY KEY IDENTITY NOT NULL,
+ProductId INT REFERENCES Products(Id) ON DELETE CASCADE NOT NULL,
+SellingDate DATE CHECK(SellingDate > '2010-01-01' AND SellingDate <= GETDATE()) DEFAULT GETDATE() NOT NULL,
+SalesmanId INT REFERENCES Salesmans(Id) NOT NULL,
+BuyerId INT REFERENCES Buyers(Id) NULL
+) -- ne dobavleno
+
+CREATE TABLE Salesmans
+(
+Id INT PRIMARY KEY IDENTITY NOT NULL,
+FullName NVARCHAR(100) CHECK(FullName != '') NOT NULL,
+PositionId INT REFERENCES Positions(Id) NOT NULL,
+Gender NVARCHAR(100) CHECK(Gender != '') NOT NULL,
+Salary MONEY CHECK(Salary > -1) NOT NULL,
+StartDate DATE CHECK(StartDate > '2010-01-01' AND DATEDIFF(year, StartDate, GETDATE()) < 5)
+)
+
+CREATE TABLE Positions
+(
+Id INT PRIMARY KEY IDENTITY NOT NULL,
+Name NVARCHAR(100) CHECK(Name != '') NOT NULL
+)
+
+CREATE TABLE Buyers
+(
+Id INT PRIMARY KEY IDENTITY NOT NULL,
+FullName NVARCHAR(100) CHECK(FullName != '') NOT NULL,
+Email NVARCHAR(100) CHECK(Email != '') NOT NULL,
+Phone NVARCHAR(100) CHECK(Phone != '') NULL,
+Gender NVARCHAR(100) CHECK(Gender != '') NOT NULL, --dovabit history
+IsSubs BIT DEFAULT 0 NOT NULL
+)  -- ne dobavleno
