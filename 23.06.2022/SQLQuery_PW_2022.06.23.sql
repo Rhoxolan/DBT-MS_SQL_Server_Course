@@ -26,7 +26,7 @@ ProductId INT REFERENCES Products(Id) ON DELETE CASCADE NOT NULL,
 SellingDate DATE CHECK(SellingDate > '2010-01-01' AND SellingDate <= GETDATE()) DEFAULT GETDATE() NOT NULL,
 SalesmanId INT REFERENCES Salesmans(Id) NOT NULL,
 BuyerId INT REFERENCES Buyers(Id) NULL
-) -- ne dobavleno
+)
 
 CREATE TABLE Salesmans
 (
@@ -50,6 +50,6 @@ Id INT PRIMARY KEY IDENTITY NOT NULL,
 FullName NVARCHAR(100) CHECK(FullName != '') NOT NULL,
 Email NVARCHAR(100) CHECK(Email != '') NOT NULL,
 Phone NVARCHAR(100) CHECK(Phone != '') NULL,
-Gender NVARCHAR(100) CHECK(Gender != '') NOT NULL, --dovabit history
+Gender NVARCHAR(100) CHECK(Gender != '') NOT NULL,
 IsSubs BIT DEFAULT 0 NOT NULL
-)  -- ne dobavleno
+)
