@@ -197,3 +197,19 @@ IF (SELECT Products.ProductsAmount FROM Products JOIN inserted ON inserted.Produ
 	SELECT Id FROM inserted
 	END
 END
+
+--Тестируем БД и триггеры
+
+INSERT Positions VALUES
+('Продавец'),
+('Старший продавец'),
+('Начальник отдела продаж')
+
+--Разобраться со StartDate
+INSERT Salesmans VALUES
+('Петрова Галина Павловна', (SELECT Id FROM Positions WHERE Name = 'Продавец'), 'Жен', 10000, '2018-03-03'),
+('Федоренко Марина Валентиновна', (SELECT Id FROM Positions WHERE Name = 'Продавец'), 'Жен', 10000, '2021-07-20'),
+('Васильева Татьяна Петровна', (SELECT Id FROM Positions WHERE Name = 'Продавец'), 'Жен', 12000, '2014-09-03'),
+('Петренко Антон Петрович', (SELECT Id FROM Positions WHERE Name = 'Старший продавец'), 'Муж', 15000, '2013-01-05'),
+('Василюк Антонина Павловна', (SELECT Id FROM Positions WHERE Name = 'Старший продавец'), 'Жен', 15000, '2019-04-05'),
+('Романюк Галина Борисовна', (SELECT Id FROM Positions WHERE Name = 'Начальник отдела продаж'), 'Жен', 21000, '2015-05-05')
