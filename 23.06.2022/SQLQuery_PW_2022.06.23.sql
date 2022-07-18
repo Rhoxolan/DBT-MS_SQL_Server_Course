@@ -34,6 +34,12 @@ SalesmanId INT REFERENCES Salesmans(Id) NOT NULL,
 BuyerId INT REFERENCES Buyers(Id) NULL
 )
 
+CREATE TABLE LastUnit
+(
+Id INT PRIMARY KEY IDENTITY NOT NULL,
+ProductId INT REFERENCES Products(Id) ON DELETE CASCADE NOT NULL
+)
+
 CREATE TABLE History
 (
 Id INT PRIMARY KEY IDENTITY NOT NULL,
@@ -79,7 +85,7 @@ SELECT Id FROM inserted
 
 --2. Если после продажи товара не осталось ни одной единицы данного товара, необходимо перенести информацию
 -- о полностью проданном товаре в таблицу «Архив»
-CREATE TRIGGER Sellings_INSERT_2
+CREATE TRIGGER Sellings_INSERT_4
 ON Sellings
 AFTER INSERT
 AS
@@ -155,3 +161,39 @@ AS
 				END;
 		END;
 	END;
+
+--7. Запретить добавлять товар конкретной фирмы. Например, товар фирмы «Спорт, солнце и штанга»
+CREATE TRIGGER Products_INSERT
+ON Products
+INSTEAD OF INSERT
+AS
+	BEGIN
+	IF (SELECT Manufacturer from inserted) = 'TurboSport'
+		BEGIN
+		raiserror('Мы не можем добавлять товары этой фирмы!',16,1)
+		RETURN
+		END
+	ELSE
+		BEGIN
+		INSERT INTO Products(Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer)
+		SELECT Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer
+		FROM inserted
+		END
+	END
+
+--8. При продаже проверять количество товара в наличии. Если осталась одна единица товара,
+-- необходимо внести информацию об этом товаре в таблицу «Последняя Единица».
+CREATE TRIGGER Sellings_INSERT_2
+ON Sellings
+AFTER INSERT
+AS
+BEGIN
+UPDATE Products
+SET ProductsAmount = ((SELECT Products.ProductsAmount FROM Products JOIN inserted ON inserted.ProductId = Products.Id) - 1)
+WHERE Products.Id = (SELECT Id FROM inserted)
+IF (SELECT Products.ProductsAmount FROM Products JOIN inserted ON inserted.ProductId = Products.Id) = 1
+	BEGIN
+	INSERT INTO LastUnit
+	SELECT Id FROM inserted
+	END
+END
