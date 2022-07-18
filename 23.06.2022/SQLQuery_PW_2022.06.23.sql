@@ -10,7 +10,7 @@ CategoryId INT REFERENCES Categories(Id) ON DELETE CASCADE NOT NULL,
 ProductsAmount INT CHECK(ProductsAmount > -1) NOT NULL,
 CostPrice INT NOT NULL,
 Price INT NOT NULL,
-Manufacturer INT NOT NULL
+Manufacturer NVARCHAR(MAX) NOT NULL
 )
 
 CREATE TABLE Archive
@@ -53,7 +53,7 @@ FullName NVARCHAR(100) CHECK(FullName != '') NOT NULL,
 PositionId INT REFERENCES Positions(Id) NOT NULL,
 Gender NVARCHAR(100) CHECK(Gender != '') NOT NULL,
 Salary MONEY CHECK(Salary > -1) NOT NULL,
-StartDate DATE CHECK(StartDate > '2010-01-01' AND DATEDIFF(year, StartDate, GETDATE()) < 5)
+StartDate DATE CHECK(StartDate > '2010-01-01' AND StartDate < DATEADD(year, 5, GETDATE())) NOT NULL
 )
 
 CREATE TABLE Positions
@@ -96,25 +96,28 @@ IF (SELECT ProductsAmount FROM Products JOIN inserted ON inserted.ProductId = Pr
 	END;
 
 --3. Не позволять регистрировать уже существующего клиента. При вставке проверять наличие клиента по номеру и email
--- https://dotnettutorials.net/lesson/instead-of-insert-trigger-in-sql-server/
-CREATE TRIGGER Buyers_INSERT
+CREATE TRIGGER Buyers_INSERT --Протестировано
 ON Buyers
 INSTEAD OF INSERT
 AS
+BEGIN
 IF EXISTS (SELECT Buyers.Email, Buyers.Phone FROM Buyers JOIN inserted ON Buyers.Email = inserted.Email OR Buyers.Phone = inserted.Phone)
 	BEGIN
 	raiserror('Пользователь с такими данными уже зарегестрирован',16,1)
 	RETURN
-	END;
+	END
 ELSE
 	BEGIN
-	INSERT INTO Buyers(Id, FullName, Email, Phone, Gender, IsSubs)
-	SELECT Id, FullName, Email, Phone, Gender, IsSubs
+	INSERT INTO Buyers(FullName, Email, Phone, Gender, IsSubs, SailPercent)
+	SELECT FullName, Email, Phone, Gender, IsSubs, SailPercent
 	FROM inserted
-END;
+	END
+END
+
+DROP TRIGGER Buyers_INSERT
 
 --4. Запретить удаление существующих клиентов
-CREATE TRIGGER Buyers_DELETE
+CREATE TRIGGER Buyers_DELETE --Протестировано
 ON Buyers
 INSTEAD OF DELETE
 AS
@@ -124,7 +127,7 @@ AS
 	END
 
 --5. Запретить удаление сотрудников, принятых на работу до 2015 года
-CREATE TRIGGER Salesmans_DELETE
+CREATE TRIGGER Salesmans_DELETE --Протестировано
 ON Salesmans
 INSTEAD OF DELETE
 AS
@@ -162,24 +165,26 @@ AS
 		END;
 	END;
 
+
+DROP TRIGGER Products_INSERT
 --7. Запретить добавлять товар конкретной фирмы. Например, товар фирмы «Спорт, солнце и штанга»
 CREATE TRIGGER Products_INSERT
 ON Products
 INSTEAD OF INSERT
 AS
+BEGIN
+IF (SELECT Manufacturer from inserted)  = 'TurboSport'
 	BEGIN
-	IF (SELECT Manufacturer from inserted) = 'TurboSport'
-		BEGIN
-		raiserror('Мы не можем добавлять товары этой фирмы!',16,1)
-		RETURN
-		END
-	ELSE
-		BEGIN
-		INSERT INTO Products(Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer)
-		SELECT Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer
-		FROM inserted
-		END
+	raiserror('Мы не можем добавлять товары этой фирмы!',16,1)
+	RETURN
 	END
+ELSE
+	BEGIN
+	INSERT INTO Products(Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer)
+	SELECT Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer
+	FROM inserted
+	END
+END
 
 --8. При продаже проверять количество товара в наличии. Если осталась одна единица товара,
 -- необходимо внести информацию об этом товаре в таблицу «Последняя Единица».
@@ -205,7 +210,6 @@ INSERT Positions VALUES
 ('Старший продавец'),
 ('Начальник отдела продаж')
 
---Разобраться со StartDate
 INSERT Salesmans VALUES
 ('Петрова Галина Павловна', (SELECT Id FROM Positions WHERE Name = 'Продавец'), 'Жен', 10000, '2018-03-03'),
 ('Федоренко Марина Валентиновна', (SELECT Id FROM Positions WHERE Name = 'Продавец'), 'Жен', 10000, '2021-07-20'),
@@ -213,3 +217,35 @@ INSERT Salesmans VALUES
 ('Петренко Антон Петрович', (SELECT Id FROM Positions WHERE Name = 'Старший продавец'), 'Муж', 15000, '2013-01-05'),
 ('Василюк Антонина Павловна', (SELECT Id FROM Positions WHERE Name = 'Старший продавец'), 'Жен', 15000, '2019-04-05'),
 ('Романюк Галина Борисовна', (SELECT Id FROM Positions WHERE Name = 'Начальник отдела продаж'), 'Жен', 21000, '2015-05-05')
+--Тестируем триггер №5 Salesmans_DELETE, пытаемся удалить пользователя принятого на работу до 2015 года
+DELETE FROM Salesmans WHERE Salesmans.FullName = 'Васильева Татьяна Петровна'
+--Другого удалить можем
+INSERT Salesmans VALUES
+('Петрова Марина Павловна', (SELECT Id FROM Positions WHERE Name = 'Продавец'), 'Жен', 9000, '2018-03-03')
+DELETE FROM Salesmans WHERE Salesmans.FullName = 'Петрова Марина Павловна'
+
+--Тестируем триггер №3 Buyers_INSERT
+INSERT Buyers VALUES
+('Петров Петр Андреевич', 'partypetya@petrovich.com', '+358118629076', 'Муж', 1, 0),
+('Василькович Анатолий Митрофанович', 'tolyatolyan@anatoliy.com', '+158178656077', 'Муж', 0, 0),
+('Петрова Анастасия Васильевна', 'partypetya@petrovich.com', '+128314659677', 'Жен', 1, 0)
+--Намеренно неверный запрос - добавление уже зарегестрированного пользоватлеля
+INSERT Buyers VALUES
+('Петров Петр Андреевич', 'partypetya@petrovich.com', '+358118629076', 'Муж', 1, 0)
+--Тестируем триггер №4 Buyers_DELETE, пытаемся удалить зарегетрированного пользователя
+DELETE FROM Buyers WHERE Buyers.FullName = 'Василькович Анатолий Митрофанович'
+
+
+INSERT Categories VALUES
+('Спортивная одежда'),
+('Спортивная обувь'),
+('Спортивный инвертарь')
+
+--Тестируем триггер №7 Products_INSERT
+INSERT Products VALUES
+('Полуботинки MERREL трекинговые', (SELECT Id FROM Categories WHERE Name = 'Спортивная обувь'), 15, 2500, 3700, 'MERREL'),
+('Полуботинки Columbia трекинговые', (SELECT Id FROM Categories WHERE Name = 'Спортивная обувь'), 15, 3500, 5700, 'Columbia'),
+('Куртка Outventure демисезон', (SELECT Id FROM Categories WHERE Name = 'Спортивная одежда'), 35, 500, 1500, 'Outventure'),
+('Куртка Merrel зима', (SELECT Id FROM Categories WHERE Name = 'Спортивная одежда'), 5, 3500, 7700, 'MERREL'),
+('Гантели Интер-Атлетика 5 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 50, 200, 300, 'Интер-Атлетика'),
+('Гантели Интер-Атлетика 7 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 50, 250, 350, 'Интер-Атлетика')
