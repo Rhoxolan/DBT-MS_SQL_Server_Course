@@ -165,8 +165,6 @@ AS
 		END;
 	END;
 
-
-DROP TRIGGER Products_INSERT
 --7. Запретить добавлять товар конкретной фирмы. Например, товар фирмы «Спорт, солнце и штанга»
 CREATE TRIGGER Products_INSERT --Протестировано
 ON Products
