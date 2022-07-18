@@ -168,20 +168,20 @@ AS
 
 DROP TRIGGER Products_INSERT
 --7. Запретить добавлять товар конкретной фирмы. Например, товар фирмы «Спорт, солнце и штанга»
-CREATE TRIGGER Products_INSERT
+CREATE TRIGGER Products_INSERT --Протестировано
 ON Products
 INSTEAD OF INSERT
 AS
 BEGIN
-IF (SELECT Manufacturer from inserted)  = 'TurboSport'
+IF EXISTS (SELECT Manufacturer from inserted WHERE Manufacturer = 'TurboSport')
 	BEGIN
 	raiserror('Мы не можем добавлять товары этой фирмы!',16,1)
 	RETURN
 	END
 ELSE
 	BEGIN
-	INSERT INTO Products(Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer)
-	SELECT Id, Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer
+	INSERT INTO Products(Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer)
+	SELECT Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer
 	FROM inserted
 	END
 END
@@ -249,3 +249,6 @@ INSERT Products VALUES
 ('Куртка Merrel зима', (SELECT Id FROM Categories WHERE Name = 'Спортивная одежда'), 5, 3500, 7700, 'MERREL'),
 ('Гантели Интер-Атлетика 5 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 50, 200, 300, 'Интер-Атлетика'),
 ('Гантели Интер-Атлетика 7 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 50, 250, 350, 'Интер-Атлетика')
+--Пробуем вставить товар фирмы TurboSport
+INSERT Products VALUES
+('Гиря 16 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивная обувь'), 15, 2500, 3700, 'TurboSport')
