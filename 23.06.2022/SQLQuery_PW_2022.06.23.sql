@@ -182,20 +182,22 @@ END
 
 --8. При продаже проверять количество товара в наличии. Если осталась одна единица товара,
 -- необходимо внести информацию об этом товаре в таблицу «Последняя Единица».
-DROP TRIGGER Sellings_INSERT_2
-CREATE TRIGGER Sellings_INSERT_2
+CREATE TRIGGER Sellings_INSERT_2 --Протестировано
 ON Sellings
 AFTER INSERT
 AS
 BEGIN
+--Уменьшаем к-во товара
 UPDATE Products
-SET ProductsAmount = ((SELECT Products.ProductsAmount FROM Products JOIN inserted ON inserted.ProductId = Products.Id) - 1)
-WHERE Products.Id = (SELECT Id FROM inserted)
-IF (SELECT Products.ProductsAmount FROM Products JOIN inserted ON inserted.ProductId = Products.Id) = 1
-	BEGIN
-	INSERT INTO LastUnit
-	SELECT Id FROM inserted
-	END
+SET ProductsAmount = ProductsAmount - 1
+FROM (SELECT Products.Id FROM Products JOIN inserted ON inserted.ProductId = Products.Id) AS Selected
+WHERE Products.Id = Selected.Id
+--Добавляем в таблицу "Последняя единица" при достижении ProductsAmount = 1:
+INSERT LastUnit VALUES
+((SELECT Products.Id FROM Products WHERE Products.Id = ANY(SELECT inserted.ProductId FROM inserted)))
+--Убираем из таблицы "Последняя единица" при достижении ProductsAmount = 0:
+DELETE LastUnit
+WHERE LastUnit.ProductId = (SELECT Products.Id FROM Products WHERE Products.Id = ANY(SELECT inserted.ProductId FROM inserted) AND Products.ProductsAmount = 0)
 END
 
 --Тестируем БД и триггеры
@@ -262,4 +264,10 @@ INSERT Sellings VALUES
 (SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), NULL),
 ((SELECT Id FROM Products WHERE Name = 'Велотренажер'), DEFAULT,
 (SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), (SELECT Id FROM Buyers WHERE FullName = 'Петров Петр Андреевич'))
---Тестируем триггер №8 Sellings_INSERT_2
+--Тестируем триггер №8 Sellings_INSERT_2 (Добавление в LastUnit если осталась последняя единца)
+INSERT Sellings VALUES
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Василюк Антонина Павловна'), (SELECT Id FROM Buyers WHERE FullName = 'Петрова Анастасия Васильевна')),
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Петренко Антон Петрович'), (SELECT Id FROM Buyers WHERE FullName = 'Василькович Анатолий Митрофанович'))
+--Тестируем триггер №2 Sellings_INSERT_4 (Добавляем в архив закончившиеся товары)
