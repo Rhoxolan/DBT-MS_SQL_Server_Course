@@ -76,7 +76,7 @@ ALTER TABLE Buyers
 ADD SailPercent INT CHECK(SailPercent > -1 AND SailPercent < 101) NOT NULL DEFAULT 0
 
 --1. При продаже товара, заносить информацию о продаже в таблицу «История». Таблица «История» используется для дубляжа информации о всех продажах
-CREATE TRIGGER Sellings_INSERT
+CREATE TRIGGER Sellings_INSERT --Протестировано
 ON Sellings
 AFTER INSERT
 AS
@@ -85,6 +85,7 @@ SELECT Id FROM inserted
 
 --2. Если после продажи товара не осталось ни одной единицы данного товара, необходимо перенести информацию
 -- о полностью проданном товаре в таблицу «Архив»
+DROP TRIGGER Sellings_INSERT_4
 CREATE TRIGGER Sellings_INSERT_4
 ON Sellings
 AFTER INSERT
@@ -96,7 +97,7 @@ IF (SELECT ProductsAmount FROM Products JOIN inserted ON inserted.ProductId = Pr
 	END;
 
 --3. Не позволять регистрировать уже существующего клиента. При вставке проверять наличие клиента по номеру и email
-CREATE TRIGGER Buyers_INSERT --Протестировано
+CREATE TRIGGER Buyers_INSERT --Протестировано, перепроверить EXISTS
 ON Buyers
 INSTEAD OF INSERT
 AS
@@ -127,7 +128,7 @@ AS
 	END
 
 --5. Запретить удаление сотрудников, принятых на работу до 2015 года
-CREATE TRIGGER Salesmans_DELETE --Протестировано
+CREATE TRIGGER Salesmans_DELETE --Протестировано, перепроверить if
 ON Salesmans
 INSTEAD OF DELETE
 AS
@@ -144,29 +145,24 @@ ELSE
 
 --6. При новой покупке товара нужно проверять общую сумму покупок клиента.
 -- Если сумма превысила 50000 грн, необходимо установить процент скидки в 15%
-CREATE TRIGGER Sellings_INSERT_3
+CREATE TRIGGER Sellings_INSERT_3 -- Протестировано
 ON Sellings
 AFTER INSERT
 AS
-	BEGIN
-	DECLARE @buyrId INT;
-	SET @buyrId = (SELECT inserted.BuyerId FROM inserted)
-	IF (@buyrId is not null)
-		BEGIN
-		IF (SELECT SUM(Products.Price)
-			FROM Products
-			JOIN inserted ON inserted.ProductId = Products.Id
-			JOIN Buyers ON Buyers.Id = inserted.BuyerId) > 50000
-				BEGIN
-				UPDATE Buyers
-				SET SailPercent = 15
-				WHERE Buyers.Id = @buyrId
-				END;
-		END;
-	END;
+BEGIN
+UPDATE Buyers -- Триггер работает при покупке товара на >50000, не на всю сумму чека
+SET SailPercent = 15
+FROM
+(SELECT Sellings.BuyerId
+FROM Sellings
+JOIN inserted ON inserted.Id = Sellings.Id
+JOIN Products ON Sellings.ProductId = Products.Id
+WHERE Sellings.BuyerId is not null AND Products.Price > 50000) AS Selected
+WHERE Selected.BuyerId = Buyers.Id
+END;
 
 --7. Запретить добавлять товар конкретной фирмы. Например, товар фирмы «Спорт, солнце и штанга»
-CREATE TRIGGER Products_INSERT --Протестировано
+CREATE TRIGGER Products_INSERT --Протестировано, перепроверить exists
 ON Products
 INSTEAD OF INSERT
 AS
@@ -186,6 +182,7 @@ END
 
 --8. При продаже проверять количество товара в наличии. Если осталась одна единица товара,
 -- необходимо внести информацию об этом товаре в таблицу «Последняя Единица».
+DROP TRIGGER Sellings_INSERT_2
 CREATE TRIGGER Sellings_INSERT_2
 ON Sellings
 AFTER INSERT
@@ -247,6 +244,22 @@ INSERT Products VALUES
 ('Куртка Merrel зима', (SELECT Id FROM Categories WHERE Name = 'Спортивная одежда'), 5, 3500, 7700, 'MERREL'),
 ('Гантели Интер-Атлетика 5 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 50, 200, 300, 'Интер-Атлетика'),
 ('Гантели Интер-Атлетика 7 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 50, 250, 350, 'Интер-Атлетика')
+INSERT Products VALUES
+('Велотренажер', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 10, 45000, 55000, 'Интер-Атлетика')
 --Пробуем вставить товар фирмы TurboSport
 INSERT Products VALUES
 ('Гиря 16 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивная обувь'), 15, 2500, 3700, 'TurboSport')
+
+--Тестируем триггер №1 Sellings_INSERT (Добавление в таблицу История при добавлении в табилцу Покупки)
+INSERT Sellings VALUES
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), NULL),
+((SELECT Id FROM Products WHERE Name = 'Полуботинки MERREL трекинговые'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), (SELECT Id FROM Buyers WHERE FullName = 'Петров Петр Андреевич'))
+--Тестируем триггер №6 Sellings_INSERT_3 (Скидка 15 % при сумме покупки (единоразовой) на >50000)
+INSERT Sellings VALUES
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), NULL),
+((SELECT Id FROM Products WHERE Name = 'Велотренажер'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), (SELECT Id FROM Buyers WHERE FullName = 'Петров Петр Андреевич'))
+--Тестируем триггер №8 Sellings_INSERT_2
