@@ -85,16 +85,17 @@ SELECT Id FROM inserted
 
 --2. Если после продажи товара не осталось ни одной единицы данного товара, необходимо перенести информацию
 -- о полностью проданном товаре в таблицу «Архив»
-DROP TRIGGER Sellings_INSERT_4
-CREATE TRIGGER Sellings_INSERT_4
+CREATE TRIGGER Sellings_INSERT_4 --Протестировано
 ON Sellings
 AFTER INSERT
 AS
-IF (SELECT ProductsAmount FROM Products JOIN inserted ON inserted.ProductId = Products.Id) = 0
-	BEGIN
-	INSERT Archive VALUES
-	((SELECT inserted.ProductId FROM inserted))
-	END;
+BEGIN
+INSERT INTO Archive(ProductId)
+SELECT inserted.ProductId
+FROM inserted
+JOIN Products ON Products.Id = inserted.ProductId
+WHERE Products.ProductsAmount = 0
+END
 
 --3. Не позволять регистрировать уже существующего клиента. При вставке проверять наличие клиента по номеру и email
 CREATE TRIGGER Buyers_INSERT --Протестировано, перепроверить EXISTS
@@ -193,13 +194,15 @@ SET ProductsAmount = ProductsAmount - 1
 FROM (SELECT Products.Id FROM Products JOIN inserted ON inserted.ProductId = Products.Id) AS Selected
 WHERE Products.Id = Selected.Id
 --Добавляем в таблицу "Последняя единица" при достижении ProductsAmount = 1:
-INSERT LastUnit VALUES
-((SELECT Products.Id FROM Products WHERE Products.Id = ANY(SELECT inserted.ProductId FROM inserted)))
+INSERT INTO LastUnit(ProductId)
+SELECT inserted.ProductId
+FROM inserted
+JOIN Products ON Products.Id = inserted.ProductId
+WHERE Products.ProductsAmount = 1
 --Убираем из таблицы "Последняя единица" при достижении ProductsAmount = 0:
 DELETE LastUnit
 WHERE LastUnit.ProductId = (SELECT Products.Id FROM Products WHERE Products.Id = ANY(SELECT inserted.ProductId FROM inserted) AND Products.ProductsAmount = 0)
 END
-
 --Тестируем БД и триггеры
 
 INSERT Positions VALUES
@@ -271,3 +274,9 @@ INSERT Sellings VALUES
 ((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
 (SELECT Id FROM Salesmans WHERE FullName = 'Петренко Антон Петрович'), (SELECT Id FROM Buyers WHERE FullName = 'Василькович Анатолий Митрофанович'))
 --Тестируем триггер №2 Sellings_INSERT_4 (Добавляем в архив закончившиеся товары)
+INSERT Sellings VALUES
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), NULL),
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Василюк Антонина Павловна'), NULL)
+--Проблемы с добавением нескольких. Проверить.
