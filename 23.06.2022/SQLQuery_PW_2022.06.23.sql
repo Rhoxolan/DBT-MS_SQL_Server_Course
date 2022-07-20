@@ -1,6 +1,8 @@
 --Примечание: При создании триггера нужно помнить о том, что вероятно добавление нескольких строк сразу, пример - триггер №8 Sellings_INSERT_2
 -- https://docs.microsoft.com/ru-ru/sql/relational-databases/triggers/create-dml-triggers-to-handle-multiple-rows-of-data?view=sql-server-ver16
 -- https://www.cyberforum.ru/sql-server/thread3008756.html
+-- Триггер срабатывает 1 раз для оператора, и таблица inserted может иметь множество значений
+-- https://stackoverflow.com/questions/21967909/subquery-returned-more-than-1-value-this-is-not-permitted-when-the-subquery-fol
 
 CREATE DATABASE SportShop
 
@@ -102,7 +104,7 @@ WHERE Products.Id IN (SELECT ProductId FROM inserted) AND ProductsAmount = 0
 END
 
 --3. Не позволять регистрировать уже существующего клиента. При вставке проверять наличие клиента по номеру и email
-CREATE TRIGGER Buyers_INSERT --Протестировано, перепроверить EXISTS
+CREATE TRIGGER Buyers_INSERT --Протестировано, проверить по подобию Products_INSERT №7
 ON Buyers
 INSTEAD OF INSERT
 AS
@@ -120,8 +122,6 @@ ELSE
 	END
 END
 
-DROP TRIGGER Buyers_INSERT
-
 --4. Запретить удаление существующих клиентов
 CREATE TRIGGER Buyers_DELETE --Протестировано
 ON Buyers
@@ -133,7 +133,7 @@ AS
 	END
 
 --5. Запретить удаление сотрудников, принятых на работу до 2015 года
-CREATE TRIGGER Salesmans_DELETE --Протестировано, перепроверить if
+CREATE TRIGGER Salesmans_DELETE --Протестировано
 ON Salesmans
 INSTEAD OF DELETE
 AS
@@ -150,7 +150,7 @@ ELSE
 
 --6. При новой покупке товара нужно проверять общую сумму покупок клиента.
 -- Если сумма превысила 50000 грн, необходимо установить процент скидки в 15%
-CREATE TRIGGER Sellings_INSERT_3 -- Протестировано, проверить
+CREATE TRIGGER Sellings_INSERT_3 -- Протестировано
 ON Sellings
 AFTER INSERT
 AS
@@ -167,22 +167,20 @@ WHERE Selected.BuyerId = Buyers.Id
 END;
 
 --7. Запретить добавлять товар конкретной фирмы. Например, товар фирмы «Спорт, солнце и штанга»
-CREATE TRIGGER Products_INSERT --Протестировано, перепроверить exists
+CREATE TRIGGER Products_INSERT --Протестировано
 ON Products
 INSTEAD OF INSERT
 AS
 BEGIN
 IF EXISTS (SELECT Manufacturer from inserted WHERE Manufacturer = 'TurboSport')
 	BEGIN
-	raiserror('Мы не можем добавлять товары этой фирмы!',16,1)
-	RETURN
+	raiserror('Мы не можем добавлять товары фирмы TurboSport!',16,1)
 	END
-ELSE
-	BEGIN
+
 	INSERT INTO Products(Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer)
 	SELECT Name, CategoryId, ProductsAmount, CostPrice, Price, Manufacturer
 	FROM inserted
-	END
+	WHERE inserted.Manufacturer != 'TurboSport'
 END
 
 --8. При продаже проверять количество товара в наличии. Если осталась одна единица товара,
@@ -235,6 +233,8 @@ INSERT Buyers VALUES
 --Намеренно неверный запрос - добавление уже зарегестрированного пользоватлеля
 INSERT Buyers VALUES
 ('Петров Петр Андреевич', 'partypetya@petrovich.com', '+358118629076', 'Муж', 1, 0)
+INSERT Buyers VALUES
+('Фоеванов Ерофей Нифонтович', 'fven@petrovich.com', '+110918529071', 'Муж', 1, 0)
 --Тестируем триггер №4 Buyers_DELETE, пытаемся удалить зарегетрированного пользователя
 DELETE FROM Buyers WHERE Buyers.FullName = 'Василькович Анатолий Митрофанович'
 
@@ -256,7 +256,8 @@ INSERT Products VALUES
 ('Велотренажер', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 10, 45000, 55000, 'Интер-Атлетика')
 --Пробуем вставить товар фирмы TurboSport
 INSERT Products VALUES
-('Гиря 16 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивная обувь'), 15, 2500, 3700, 'TurboSport')
+('Гиря 16 кг', (SELECT Id FROM Categories WHERE Name = 'Спортивная обувь'), 15, 2500, 3700, 'TurboSport'),
+('Гантели Наборные', (SELECT Id FROM Categories WHERE Name = 'Спортивный инвертарь'), 50, 350, 450, 'ИнтерА')
 
 --Тестируем триггер №1 Sellings_INSERT (Добавление в таблицу История при добавлении в табилцу Покупки)
 INSERT Sellings VALUES
@@ -290,3 +291,5 @@ INSERT Sellings VALUES
 (SELECT Id FROM Salesmans WHERE FullName = 'Петрова Галина Павловна'), NULL),
 ((SELECT Id FROM Products WHERE Name = 'Гантели Интер-Атлетика 5 кг'), DEFAULT,
 (SELECT Id FROM Salesmans WHERE FullName = 'Федоренко Марина Валентиновна'), (SELECT Id FROM Buyers WHERE FullName = 'Петрова Анастасия Васильевна'))
+
+--Проверить триггер №3 Buyers_INSERT
