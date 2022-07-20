@@ -21,3 +21,6 @@ HW - дополнена БД "Academy". Работа с подзапросами
 22.06.2022 Объединения
 PW - дополнена БД "Hospital". Работа с EXISTS, NOT EXISTS, INNER JOIN, LEFT JOIN.
 HW - дополнена БД "Academy". Работа с INNER JOIN, NOT EXISTS, UNION, LEFT JOIN.
+
+23.06.2022 Триггеры
+PW - создана БД "SportShop". Работа с триггерами. Примеры работы с GETDATE() и функцией DATEADD.
