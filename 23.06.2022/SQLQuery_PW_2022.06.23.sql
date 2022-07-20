@@ -1,3 +1,7 @@
+--Примечание: При создании триггера нужно помнить о том, что вероятно добавление нескольких строк сразу, пример - триггер №8 Sellings_INSERT_2
+-- https://docs.microsoft.com/ru-ru/sql/relational-databases/triggers/create-dml-triggers-to-handle-multiple-rows-of-data?view=sql-server-ver16
+-- https://www.cyberforum.ru/sql-server/thread3008756.html
+
 CREATE DATABASE SportShop
 
 USE SportShop
@@ -85,16 +89,16 @@ SELECT Id FROM inserted
 
 --2. Если после продажи товара не осталось ни одной единицы данного товара, необходимо перенести информацию
 -- о полностью проданном товаре в таблицу «Архив»
+-- Примечание! Триггер Sellings_INSERT_4 должен вызываться после триггера Sellings_INSERT_2, либо же нужно все делать в 1-м триггере.
 CREATE TRIGGER Sellings_INSERT_4 --Протестировано
 ON Sellings
 AFTER INSERT
 AS
 BEGIN
 INSERT INTO Archive(ProductId)
-SELECT inserted.ProductId
-FROM inserted
-JOIN Products ON Products.Id = inserted.ProductId
-WHERE Products.ProductsAmount = 0
+SELECT Products.Id
+FROM Products
+WHERE Products.Id IN (SELECT ProductId FROM inserted) AND ProductsAmount = 0
 END
 
 --3. Не позволять регистрировать уже существующего клиента. При вставке проверять наличие клиента по номеру и email
@@ -146,7 +150,7 @@ ELSE
 
 --6. При новой покупке товара нужно проверять общую сумму покупок клиента.
 -- Если сумма превысила 50000 грн, необходимо установить процент скидки в 15%
-CREATE TRIGGER Sellings_INSERT_3 -- Протестировано
+CREATE TRIGGER Sellings_INSERT_3 -- Протестировано, проверить
 ON Sellings
 AFTER INSERT
 AS
@@ -189,20 +193,19 @@ AFTER INSERT
 AS
 BEGIN
 --Уменьшаем к-во товара
-UPDATE Products
-SET ProductsAmount = ProductsAmount - 1
-FROM (SELECT Products.Id FROM Products JOIN inserted ON inserted.ProductId = Products.Id) AS Selected
-WHERE Products.Id = Selected.Id
+UPDATE Products -- https://docs.microsoft.com/ru-ru/sql/relational-databases/triggers/create-dml-triggers-to-handle-multiple-rows-of-data?view=sql-server-ver16
+   SET ProductsAmount = ProductsAmount - (SELECT SUM(1) FROM inserted WHERE Products.Id = inserted.ProductId)  
+   WHERE Products.Id IN (SELECT ProductId FROM inserted)
 --Добавляем в таблицу "Последняя единица" при достижении ProductsAmount = 1:
 INSERT INTO LastUnit(ProductId)
-SELECT inserted.ProductId
-FROM inserted
-JOIN Products ON Products.Id = inserted.ProductId
-WHERE Products.ProductsAmount = 1
+SELECT Products.Id
+FROM Products
+WHERE Products.Id IN (SELECT ProductId FROM inserted) AND ProductsAmount = 1
 --Убираем из таблицы "Последняя единица" при достижении ProductsAmount = 0:
 DELETE LastUnit
 WHERE LastUnit.ProductId = (SELECT Products.Id FROM Products WHERE Products.Id = ANY(SELECT inserted.ProductId FROM inserted) AND Products.ProductsAmount = 0)
 END
+
 --Тестируем БД и триггеры
 
 INSERT Positions VALUES
@@ -278,5 +281,12 @@ INSERT Sellings VALUES
 ((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
 (SELECT Id FROM Salesmans WHERE FullName = 'Васильева Татьяна Петровна'), NULL),
 ((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Василюк Антонина Павловна'), NULL),
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
 (SELECT Id FROM Salesmans WHERE FullName = 'Василюк Антонина Павловна'), NULL)
---Проблемы с добавением нескольких. Проверить.
+
+INSERT Sellings VALUES
+((SELECT Id FROM Products WHERE Name = 'Куртка Merrel зима'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Петрова Галина Павловна'), NULL),
+((SELECT Id FROM Products WHERE Name = 'Гантели Интер-Атлетика 5 кг'), DEFAULT,
+(SELECT Id FROM Salesmans WHERE FullName = 'Федоренко Марина Валентиновна'), (SELECT Id FROM Buyers WHERE FullName = 'Петрова Анастасия Васильевна'))
