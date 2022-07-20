@@ -2,7 +2,6 @@
 -- https://docs.microsoft.com/ru-ru/sql/relational-databases/triggers/create-dml-triggers-to-handle-multiple-rows-of-data?view=sql-server-ver16
 -- https://www.cyberforum.ru/sql-server/thread3008756.html
 -- Триггер срабатывает 1 раз для оператора, и таблица inserted может иметь множество значений
--- https://stackoverflow.com/questions/21967909/subquery-returned-more-than-1-value-this-is-not-permitted-when-the-subquery-fol
 
 CREATE DATABASE SportShop
 
@@ -104,7 +103,7 @@ WHERE Products.Id IN (SELECT ProductId FROM inserted) AND ProductsAmount = 0
 END
 
 --3. Не позволять регистрировать уже существующего клиента. При вставке проверять наличие клиента по номеру и email
-CREATE TRIGGER Buyers_INSERT --Протестировано, проверить по подобию Products_INSERT №7
+CREATE TRIGGER Buyers_INSERT --Протестировано
 ON Buyers
 INSTEAD OF INSERT
 AS
@@ -112,14 +111,12 @@ BEGIN
 IF EXISTS (SELECT Buyers.Email, Buyers.Phone FROM Buyers JOIN inserted ON Buyers.Email = inserted.Email OR Buyers.Phone = inserted.Phone)
 	BEGIN
 	raiserror('Пользователь с такими данными уже зарегестрирован',16,1)
-	RETURN
 	END
-ELSE
-	BEGIN
+
 	INSERT INTO Buyers(FullName, Email, Phone, Gender, IsSubs, SailPercent)
 	SELECT FullName, Email, Phone, Gender, IsSubs, SailPercent
 	FROM inserted
-	END
+	WHERE NOT EXISTS (SELECT Buyers.Email, Buyers.Phone FROM Buyers WHERE Buyers.Email = inserted.Email OR Buyers.Phone = inserted.Phone)
 END
 
 --4. Запретить удаление существующих клиентов
@@ -192,8 +189,8 @@ AS
 BEGIN
 --Уменьшаем к-во товара
 UPDATE Products -- https://docs.microsoft.com/ru-ru/sql/relational-databases/triggers/create-dml-triggers-to-handle-multiple-rows-of-data?view=sql-server-ver16
-   SET ProductsAmount = ProductsAmount - (SELECT SUM(1) FROM inserted WHERE Products.Id = inserted.ProductId)  
-   WHERE Products.Id IN (SELECT ProductId FROM inserted)
+	SET ProductsAmount = ProductsAmount - (SELECT SUM(1) FROM inserted WHERE Products.Id = inserted.ProductId)  
+	WHERE Products.Id IN (SELECT ProductId FROM inserted)
 --Добавляем в таблицу "Последняя единица" при достижении ProductsAmount = 1:
 INSERT INTO LastUnit(ProductId)
 SELECT Products.Id
@@ -234,7 +231,8 @@ INSERT Buyers VALUES
 INSERT Buyers VALUES
 ('Петров Петр Андреевич', 'partypetya@petrovich.com', '+358118629076', 'Муж', 1, 0)
 INSERT Buyers VALUES
-('Фоеванов Ерофей Нифонтович', 'fven@petrovich.com', '+110918529071', 'Муж', 1, 0)
+('Фоеванов Ерофей Нифонтович', 'fven@petrovich.com', '+110918529071', 'Муж', 1, 0),
+('Радионов Антей Адрианович', 'ranadr@vsremaily.com', '+123968429071', 'Муж', 1, 0)
 --Тестируем триггер №4 Buyers_DELETE, пытаемся удалить зарегетрированного пользователя
 DELETE FROM Buyers WHERE Buyers.FullName = 'Василькович Анатолий Митрофанович'
 
@@ -291,5 +289,3 @@ INSERT Sellings VALUES
 (SELECT Id FROM Salesmans WHERE FullName = 'Петрова Галина Павловна'), NULL),
 ((SELECT Id FROM Products WHERE Name = 'Гантели Интер-Атлетика 5 кг'), DEFAULT,
 (SELECT Id FROM Salesmans WHERE FullName = 'Федоренко Марина Валентиновна'), (SELECT Id FROM Buyers WHERE FullName = 'Петрова Анастасия Васильевна'))
-
---Проверить триггер №3 Buyers_INSERT
