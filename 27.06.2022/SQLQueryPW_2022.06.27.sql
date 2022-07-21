@@ -63,10 +63,8 @@ PRINT @MinVal
 GO
 CREATE PROCEDURE CharMultDig @character NCHAR(1), @digit INT, @string NVARCHAR(max) OUTPUT
 AS
-SET @string = replicate(@character, @digit)
+SET @string = replicate(@character, @digit) --Добавить в примечание
 
 DECLARE @multchar NVARCHAR(MAX)
-EXEC @multchar = CharMultDig '#', 10, @multchar OUTPUT
+EXEC CharMultDig '#', 10, @multchar OUTPUT
 PRINT @multchar
-
---Разобраться
