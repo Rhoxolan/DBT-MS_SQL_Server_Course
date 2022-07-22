@@ -17,14 +17,14 @@ EXEC GetCurTime
 --3. Хранимая процедура возвращает информацию о текущей дате
 GO
 CREATE PROCEDURE GetCurDate
-AS PRINT CONVERT(DATE, GETDATE()) --Добавить в примечание
+AS PRINT CONVERT(DATE, GETDATE())
 
 EXEC GetCurDate
 
 --4. Хранимая процедура принимает три числа и возвращает их сумму
 GO
 CREATE PROCEDURE GetSumThreeNums @num1 INT, @num2 INT, @num3 INT 
-AS RETURN (@num1 + @num2 + @num3) -- Примечание - RETURN возвращяет только int --Добавить в примечание
+AS RETURN (@num1 + @num2 + @num3) -- Примечание - RETURN возвращяет только int
 
 DECLARE @sumVal INT
 EXEC @sumVal = GetSumThreeNums 1, 2, 3
@@ -32,7 +32,7 @@ PRINT @sumVal
 
 --5. Хранимая процедура принимает три числа и возвращает среднеарифметическое трёх чисел
 GO
-CREATE PROCEDURE GetAVGThreeNums @num1 REAL, @num2 REAL, @num3 REAL, @avgnums REAL OUTPUT --Добавить в примечание
+CREATE PROCEDURE GetAVGThreeNums @num1 REAL, @num2 REAL, @num3 REAL, @avgnums REAL OUTPUT
 AS SET @avgnums = (@num1 + @num2 + @num3) / 3
 
 DECLARE @avgVal REAL
@@ -63,7 +63,7 @@ PRINT @MinVal
 GO
 CREATE PROCEDURE CharMultDig @character NCHAR(1), @digit INT, @string NVARCHAR(max) OUTPUT
 AS
-SET @string = replicate(@character, @digit) --Добавить в примечание
+SET @string = replicate(@character, @digit)
 
 DECLARE @multchar NVARCHAR(MAX)
 EXEC CharMultDig '#', 10, @multchar OUTPUT
@@ -92,7 +92,7 @@ PRINT @digit
 GO
 CREATE PROCEDURE exponentiation @digit REAL, @expd REAL, @prod REAL OUTPUT
 AS
-SET @prod = POWER(@digit, @expd) -- Добавить в примечание
+SET @prod = POWER(@digit, @expd)
 
 GO
 DECLARE @digit REAL
@@ -142,3 +142,23 @@ AS
 SELECT * FROM Sellings WHERE Sellings.SellingDate BETWEEN @startdate AND @enddate
 
 EXEC ShowSellingsOnDates '2022-07-19', '2022-07-20'
+
+--6. Хранимая процедура отображает информацию о продажах конкретного продавца.
+-- ФИО продавца передаётся в качестве параметра хранимой процедуры
+GO
+CREATE PROCEDURE ShowSalesmansSellings @fullName NVARCHAR(max)
+AS
+SELECT * FROM Sellings JOIN Salesmans ON Sellings.SalesmanId = Salesmans.Id WHERE Salesmans.FullName = @fullName
+
+EXEC ShowSalesmansSellings 'Федоренко Марина Валентиновна'
+
+--7. Хранимая процедура возвращает среднеарифметическую цену продажи в конкретный год. Год передаётся в качестве параметра.
+GO
+CREATE PROCEDURE ShowAVGSellingsOnYear @year INT, @avgPrice INT OUTPUT
+AS
+SELECT @avgPrice = AVG(Products.Price) FROM Sellings JOIN Products ON Sellings.ProductId = Products.Id AND YEAR(Sellings.SellingDate) = @year
+
+GO
+DECLARE @avgPrice INT
+EXEC ShowAVGSellingsOnYear 2022, @avgPrice OUTPUT
+PRINT @avgPrice
