@@ -74,3 +74,26 @@ RETURN @MinV + @MaxV
 END
 
 SELECT dbo.GetSumMinMaxFromFive(1,2,3,4,5)
+
+--7. Пользовательская функция показывает все четные или нечетные числа в переданном диапазоне. Функция принимает
+-- три параметра: начало диапазона, конец диапазона, чёт или нечет показывать.
+CREATE FUNCTION GetEvensOnDiapason(@startD INT, @endD INT, @evenornot BIT)
+RETURNS NVARCHAR(max)
+AS
+BEGIN
+DECLARE @_str NVARCHAR(max)
+WHILE (@startD < @endD)
+	BEGIN
+	if (@evenornot = 1)
+		if(@startD % 2 = 0)
+			SET @_str = CONCAT(@_str, ' ', @startD)
+	if (@evenornot = 0)
+		if(@startD % 2 != 0)
+			SET @_str = CONCAT(@_str, ' ', @startD)
+	SET @startD += 1
+	END
+	RETURN @_str
+END
+
+SELECT dbo.GetEvensOnDiapason(1, 10, 1)
+SELECT dbo.GetEvensOnDiapason(1, 10, 0)
