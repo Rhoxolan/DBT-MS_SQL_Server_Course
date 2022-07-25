@@ -97,3 +97,106 @@ END
 
 SELECT dbo.GetEvensOnDiapason(1, 10, 1)
 SELECT dbo.GetEvensOnDiapason(1, 10, 0)
+
+
+-- Задание 2. Для базы данных «Продажи» из практического задания модуля «Работа с таблицами и представлениями в
+-- MS SQL Server» создайте следующие пользовательские функции:
+
+USE SportShop
+
+--1. Пользовательская функция возвращает минимальную продажу конкретного продавца.
+-- ФИО продавца передаётся в качестве параметра пользовательской функции
+GO
+CREATE FUNCTION GetMinSelling(@fullName NVARCHAR(max))
+RETURNS TABLE
+AS
+RETURN
+(
+	SELECT TOP(1) Products.Price, Products.Name, Sellings.SellingDate, Salesmans.FullName
+	FROM Sellings
+	JOIN Products ON Sellings.ProductId = Products.Id
+	JOIN Salesmans ON Sellings.SalesmanId = Salesmans.Id
+	WHERE Salesmans.FullName = @fullName
+	ORDER BY Products.Price
+);
+
+SELECT * FROM GetMinSelling('Васильева Татьяна Петровна')
+
+--2. Пользовательская функция возвращает минимальную покупку конкретного покупателя.
+-- ФИО покупателя передаётся в качестве параметра пользовательской функции
+CREATE FUNCTION GetMinSellingsOnBuyers(@fullName NVARCHAR(max))
+RETURNS TABLE
+AS
+RETURN
+(
+	SELECT TOP(1) Products.Price, Products.Name, Sellings.SellingDate, Buyers.FullName
+	FROM Sellings
+	JOIN Products ON Sellings.ProductId = Products.Id
+	JOIN Buyers ON Sellings.BuyerId = Buyers.Id
+	WHERE Buyers.FullName = @fullName
+	ORDER BY Products.Price
+);
+
+SELECT * FROM GetMinSellingsOnBuyers('Петров Петр Андреевич')
+
+--3. Пользовательская функция возвращает общую сумму продаж на конкретную дату.
+-- Дата продажи передаётся в качестве параметра
+CREATE FUNCTION GetTotalSellingsSumOnDate(@date DATE)
+RETURNS TABLE
+AS
+RETURN
+(
+	SELECT SUM(Products.Price) AS Sum, Sellings.SellingDate
+	FROM Sellings
+	JOIN Products ON Sellings.ProductId = Products.Id
+	WHERE Sellings.SellingDate = @date
+	GROUP BY Sellings.SellingDate
+)
+
+SELECT * FROM GetTotalSellingsSumOnDate('2022-07-19')
+
+--4. Пользовательская функция возвращает дату, когда общая сумма продаж за день была максимальной
+CREATE FUNCTION GetDateWhereMaxSellingsPrice()
+RETURNS DATE
+AS
+BEGIN
+	DECLARE @DateWhereMaxSellingsPrice DATE
+	SELECT @DateWhereMaxSellingsPrice = Sellings.SellingDate
+		FROM Sellings
+		JOIN Products ON Sellings.ProductId = Products.Id
+		WHERE Sellings.SellingDate = (
+			SELECT TOP(1) Sellings.SellingDate
+			FROM Sellings
+			JOIN Products ON Sellings.ProductId = Products.Id
+			GROUP BY Sellings.SellingDate
+			ORDER BY SUM(Products.Price) DESC)
+	RETURN @DateWhereMaxSellingsPrice
+END
+
+SELECT dbo.GetDateWhereMaxSellingsPrice()
+
+--5. Пользовательская функция возвращает информацию о всех продажах заданного
+-- товара. Название товара передаётся в качестве параметра
+CREATE FUNCTION GetProductSellings(@productName NVARCHAR(50))
+RETURNS TABLE
+AS
+RETURN
+(
+	SELECT Products.Name, Sellings.SellingDate
+	FROM Sellings
+	JOIN Products ON Sellings.ProductId = Products.Id
+	WHERE Products.Name = @productName
+)
+
+SELECT * FROM GetProductSellings('Полуботинки MERREL трекинговые')
+
+--6. Пользовательская функция возвращает информацию о всех продавцах с одинаковой ЗП
+CREATE FUNCTION GetSalesmansWithTheSameSalary()
+RETURNS TABLE
+AS RETURN (
+	SELECT S.FullName, S.Salary
+	FROM Salesmans S
+	WHERE EXISTS (SELECT Salesmans.Id FROM Salesmans WHERE Salesmans.Id != S.Id AND Salesmans.Salary = S.Salary) --Добавить в примечание, выборка ряда одинаковых значений из одной таблицы, псевдонимы
+)
+
+SELECT * FROM GetSalesmansWithTheSameSalary()
