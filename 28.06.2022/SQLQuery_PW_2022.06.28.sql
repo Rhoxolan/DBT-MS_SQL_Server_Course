@@ -16,7 +16,7 @@ GO
 CREATE FUNCTION GetMinutes()
 RETURNS INT
 AS
-BEGIN RETURN DATEPART(MINUTE, GETDATE()) --ДОБАВИТЬ В ПРИМЕЧАНИЕ!
+BEGIN RETURN DATEPART(MINUTE, GETDATE())
 END
 
 SELECT dbo.GetMinutes()
@@ -196,7 +196,31 @@ RETURNS TABLE
 AS RETURN (
 	SELECT S.FullName, S.Salary
 	FROM Salesmans S
-	WHERE EXISTS (SELECT Salesmans.Id FROM Salesmans WHERE Salesmans.Id != S.Id AND Salesmans.Salary = S.Salary) --Добавить в примечание, выборка ряда одинаковых значений из одной таблицы, псевдонимы
+	WHERE EXISTS (SELECT Salesmans.Id FROM Salesmans WHERE Salesmans.Id != S.Id AND Salesmans.Salary = S.Salary)
 )
 
 SELECT * FROM GetSalesmansWithTheSameSalary()
+
+--7. Пользовательская функция возвращает информацию о всех покупателях с одиноковым процентом скидки
+CREATE FUNCTION GetBuyersWithTheSameSalary()
+RETURNS TABLE
+AS RETURN (
+	SELECT B.FullName, B.SailPercent
+	FROM Buyers B
+	WHERE EXISTS (SELECT Buyers.Id FROM Buyers WHERE Buyers.Id != B.Id AND Buyers.SailPercent = B.SailPercent)
+)
+
+SELECT * FROM GetBuyersWithTheSameSalary()
+
+--8. Пользовательская функция возвращает информацию о всех продавцах, которые являются покупателями
+CREATE FUNCTION GetSalesmansWhoAreBuyers()
+RETURNS TABLE
+AS
+RETURN
+(
+	SELECT Salesmans.FullName
+	FROM Salesmans
+	JOIN Buyers ON Salesmans.FullName = Buyers.FullName
+)
+
+SELECT FullName AS ФИО FROM GetSalesmansWhoAreBuyers()
