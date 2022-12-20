@@ -1,1 +1,1 @@
-Практические работы и домашние задания по предмету "Теория баз данных. Программирование MS SQL Server" (10.06.2022 - 01.07.2022) в Компьютерной Академии ШАГ г. Кривой Рог.
+Practical works and homeworks on the subject "Database Theory. MS SQL Server" (10.06.2022 - 01.07.2022) at STEP IT Academy in Kryvyi Rih.
